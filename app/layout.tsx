@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 
 const interHeading = Inter({ subsets: ["latin"], variable: "--font-heading" });
 
-const roboto = Roboto({ subsets: ["latin"], variable: "--font-sans" });
+const roboto = Roboto({subsets:['latin'],variable:'--font-sans'});
 
 export const metadata: Metadata = {
      title: "Create Next App",
