@@ -1,0 +1,3 @@
+-- No global seed data: each user's starter workspace, project, labels, and
+-- sample tasks are created by the on_auth_user_created trigger
+-- (see 20260716120003_functions.sql) on first sign-in.
