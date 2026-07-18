@@ -17,9 +17,9 @@ let collaborator: AuthenticatedUser;
 let outsider: AuthenticatedUser;
 let admin: SupabaseClient;
 
-afterAll(async () => {
-     await clearTestData();
-});
+// afterAll(async () => {
+//      await clearTestData();
+// });
 beforeEach(async () => {
      admin = createClient(
           process.env.SUPABASE_URL!,

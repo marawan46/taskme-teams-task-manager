@@ -1,5 +1,5 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { beforeEach, describe, expect, test } from "vitest";
+import { afterAll, beforeEach, describe, expect, test } from "vitest";
 import dotenv from "dotenv";
 import {
   addMemberToProject,
@@ -16,28 +16,30 @@ let owner: AuthenticatedUser;
 let member: AuthenticatedUser;
 let outsider: AuthenticatedUser;
 let admin: SupabaseClient;
-
+// afterAll(async () => {
+//   await clearTestData();
+// });
 beforeEach(async () => {
-  await clearTestData();
 
   admin = createClient(
     process.env.SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
     { auth: { autoRefreshToken: false, persistSession: false } },
   );
+const testRunId = Date.now() + Math.random().toString(36).slice(2, 9);
 
   owner = await createAuthenticatedUser(
-    "owner@test.com",
+    `owner${testRunId}@test.com`,
     "password123",
     "Owner User",
   );
   member = await createAuthenticatedUser(
-    "member@test.com",
+    `member${testRunId}@test.com`,
     "password123",
     "Member User",
   );
   outsider = await createAuthenticatedUser(
-    "outsider@test.com",
+    `outsider${testRunId}@test.com`,
     "password123",
     "Outsider User",
   );

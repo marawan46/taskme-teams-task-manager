@@ -18,31 +18,31 @@ let outsider: AuthenticatedUser;
 let admin: SupabaseClient;
 
 beforeEach(async () => {
-  await clearTestData();
 
   admin = createClient(
     process.env.SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
     { auth: { autoRefreshToken: false, persistSession: false } },
   );
+const testRunId = Date.now() + Math.random().toString(36).slice(2, 9);
 
   owner = await createAuthenticatedUser(
-    "owner@test.com",
+    `owner${testRunId}@test.com`,
     "password123",
     "Owner User",
   );
   member = await createAuthenticatedUser(
-    "member@test.com",
+    `member${testRunId}@test.com`,
     "password123",
     "Member User",
   );
   invitee = await createAuthenticatedUser(
-    "invitee@test.com",
+    `invitee${testRunId}@test.com`,
     "password123",
     "Invitee User",
   );
   outsider = await createAuthenticatedUser(
-    "outsider@test.com",
+    `outsider${testRunId}@test.com`,
     "password123",
     "Outsider User",
   );
