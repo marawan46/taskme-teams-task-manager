@@ -1,8 +1,6 @@
 import { AppSidebar } from "@/components/app-sidebar";
-import {
-     SidebarInset,
-     SidebarProvider,
-} from "@/components/ui/sidebar";
+import DashboardHeader from "@/components/DashboardHeader";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
 export default function DashboardLayout({
      children,
@@ -12,7 +10,11 @@ export default function DashboardLayout({
      return (
           <SidebarProvider>
                <AppSidebar />
-               <SidebarInset>{children}</SidebarInset>
+
+               <SidebarInset>
+                    <DashboardHeader />
+                    {children}
+               </SidebarInset>
           </SidebarProvider>
      );
 }
