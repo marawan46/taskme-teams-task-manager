@@ -12,7 +12,7 @@ export default function DashboardHeader() {
      };
      return (
           <header className="border-b">
-               <div className="flex items-center justify-between p-4">
+               <div className="flex items-center justify-between px-4 py-2">
                     <div className="flex items-center gap-4">
                          <SidebarTrigger className="-ml-1" />
                     </div>
