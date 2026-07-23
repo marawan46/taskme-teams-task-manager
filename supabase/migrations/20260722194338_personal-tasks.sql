@@ -4,7 +4,7 @@
 
 create table my_tasks (
   id          uuid primary key default gen_random_uuid(),
-  user_id     uuid not null references auth.users(id) on delete cascade,
+  user_id     uuid not null references profiles(id) on delete cascade,
   name        text not null,
   description text default null,
   content     text default null,

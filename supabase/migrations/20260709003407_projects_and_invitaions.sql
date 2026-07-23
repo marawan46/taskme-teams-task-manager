@@ -36,7 +36,7 @@ create table projects (
   id          uuid primary key default gen_random_uuid(),
   name        text not null,
   description text default null,
-  created_by  uuid not null references auth.users(id),
+  created_by  uuid not null references profiles(id) on delete cascade,
   created_at  timestamptz default now(),
   updated_at  timestamptz default now()
   constraint projects_name_not_empty check (char_length(name) > 0)
@@ -44,7 +44,7 @@ create table projects (
 
 create table project_members (
   project_id uuid not null references projects(id) on delete cascade,
-  user_id    uuid not null references auth.users(id) on delete cascade,
+  user_id    uuid not null references profiles(id) on delete cascade,
   role       project_role not null default 'COLLABORATOR',
   joined_at  timestamptz default now(),
   primary key (project_id, user_id)
@@ -54,7 +54,7 @@ create table project_member_permissions (
   project_id  uuid not null,
   user_id     uuid not null,
   permission  project_permission not null,
-  granted_by  uuid not null references auth.users(id),
+  granted_by  uuid not null references profiles(id),
   granted_at  timestamptz default now(),
   primary key (project_id, user_id, permission),
   foreign key (project_id, user_id) references project_members(project_id, user_id) on delete cascade
@@ -65,7 +65,7 @@ create table project_invitations (
   project_id  uuid not null references projects(id) on delete cascade,
   email       text not null,
   role        project_role not null default 'COLLABORATOR',
-  invited_by  uuid not null references auth.users(id),
+  invited_by  uuid not null references profiles(id),
   token       uuid not null default gen_random_uuid(),
   status      invitation_status not null default 'PENDING',
   expires_at  timestamptz not null default (now() + interval '7 days'),
