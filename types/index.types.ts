@@ -1,3 +1,5 @@
+import type { Database } from "./database.types";
+
 export type ApiResponse = {
      status: "success" | "error";
      data: any | null;
@@ -6,3 +8,8 @@ export type ApiResponse = {
           message: string;
      } | null;
 };
+
+export type Task = Database["public"]["Tables"]["tasks"]["Row"];
+export type Project = Database["public"]["Tables"]["projects"]["Row"];
+export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
+export type TaskStatus = Database["public"]["Enums"]["task_status"];

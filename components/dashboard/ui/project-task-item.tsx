@@ -1,38 +1,64 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
-
-type Priority = "high" | "medium" | "low";
-type Status = "active" | "review";
+import type { TaskStatus } from "@/types/index.types";
 
 interface ProjectTaskItemProps {
   title: string;
-  project: string;
-  deadline: string;
-  assignee: {
-    name: string;
-    avatar?: string;
-  };
-  priority: Priority;
-  status: Status;
+  projectName: string;
+  dueDate: string | null;
+  assigneeName: string;
+  assigneeAvatar: string | null;
+  priority: number;
+  status: TaskStatus;
   isLast?: boolean;
 }
 
-const priorityStyles: Record<Priority, string> = {
-  high: "bg-primary/10 text-primary",
-  medium: "bg-muted text-muted-foreground",
-  low: "bg-muted text-muted-foreground",
+const priorityStyles: Record<number, string> = {
+  0: "bg-muted text-muted-foreground",
+  1: "bg-muted text-muted-foreground",
+  2: "bg-primary/10 text-primary",
+  3: "bg-destructive/10 text-destructive",
 };
 
-const statusStyles: Record<Status, string> = {
-  active: "bg-primary/10 text-primary",
-  review: "bg-secondary text-secondary-foreground",
+const priorityLabels: Record<number, string> = {
+  0: "Low",
+  1: "Med",
+  2: "High",
+  3: "Urgent",
 };
+
+const statusStyles: Record<TaskStatus, string> = {
+  TODO: "bg-muted text-muted-foreground",
+  IN_PROGRESS: "bg-primary/10 text-primary",
+  UNDER_REVIEW: "bg-secondary text-secondary-foreground",
+  DONE: "bg-muted text-muted-foreground",
+};
+
+const statusLabels: Record<TaskStatus, string> = {
+  TODO: "To Do",
+  IN_PROGRESS: "Active",
+  UNDER_REVIEW: "Review",
+  DONE: "Done",
+};
+
+function formatDueDate(date: string | null): string {
+  if (!date) return "";
+  const d = new Date(date);
+  const now = new Date();
+  const diffMs = d.getTime() - now.getTime();
+  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+  if (diffDays < 0) return `${Math.abs(diffDays)}d overdue`;
+  if (diffDays === 0) return "Due today";
+  if (diffDays === 1) return "Due tomorrow";
+  return `${diffDays} days left`;
+}
 
 export function ProjectTaskItem({
   title,
-  project,
-  deadline,
-  assignee,
+  projectName,
+  dueDate,
+  assigneeName,
+  assigneeAvatar,
   priority,
   status,
   isLast = false,
@@ -48,35 +74,39 @@ export function ProjectTaskItem({
         <h4 className="truncate text-base font-bold text-foreground">{title}</h4>
         <div className="mt-0.5 flex items-center gap-2">
           <span className="text-xs font-semibold uppercase tracking-wider text-primary">
-            {project}
+            {projectName}
           </span>
-          <span className="text-xs text-muted-foreground">&bull;</span>
-          <span className="text-xs font-medium text-muted-foreground">
-            {deadline}
-          </span>
+          {dueDate && (
+            <>
+              <span className="text-xs text-muted-foreground">&bull;</span>
+              <span className="text-xs font-medium text-muted-foreground">
+                {formatDueDate(dueDate)}
+              </span>
+            </>
+          )}
         </div>
       </div>
       <div className="flex shrink-0 items-center gap-6">
         <div className="flex items-center gap-2">
           <Avatar size="sm">
-            <AvatarImage src={assignee.avatar} alt={assignee.name} />
+            <AvatarImage src={assigneeAvatar ?? undefined} alt={assigneeName} />
             <AvatarFallback>
-              {assignee.name
+              {assigneeName
                 .split(" ")
                 .map((n) => n[0])
                 .join("")}
             </AvatarFallback>
           </Avatar>
-          <span className="text-xs text-muted-foreground">{assignee.name}</span>
+          <span className="text-xs text-muted-foreground">{assigneeName}</span>
         </div>
         <div className="flex items-center gap-1">
           <span
             className={cn(
               "rounded px-1.5 py-0.5 text-[10px] font-bold uppercase",
-              priorityStyles[priority]
+              priorityStyles[priority] ?? priorityStyles[0]
             )}
           >
-            {priority === "high" ? "High" : priority === "medium" ? "Med" : "Low"}
+            {priorityLabels[priority] ?? "Low"}
           </span>
           <span
             className={cn(
@@ -84,7 +114,7 @@ export function ProjectTaskItem({
               statusStyles[status]
             )}
           >
-            {status === "active" ? "Active" : "Review"}
+            {statusLabels[status]}
           </span>
         </div>
       </div>
