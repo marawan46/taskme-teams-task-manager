@@ -1,4 +1,4 @@
-import { ApiResponse } from "@/types/index.types";
+import { ApiResponse, type Task } from "@/types/index.types";
 import { SupabaseClient } from "@supabase/supabase-js";
 
 export const fetchProjects = async (
@@ -28,3 +28,24 @@ export const fetchProjects = async (
           data,
      };
 };
+
+export type ProjectTaskRow = Task & {
+     projects: { name: string } | null;
+     profiles: { full_name: string | null; avatar_url: string | null } | null;
+};
+
+export async function fetchProjectTasks(
+     supabase: SupabaseClient,
+): Promise<{ data: ProjectTaskRow[] | null; error: string | null }> {
+     const isLoading = true;
+     const { data, error } = await supabase
+          .from("tasks")
+          .select("*, projects(name), profiles:assigned_to(full_name, avatar_url)")
+          .order("created_at", { ascending: false });
+
+     if (error) {
+          return { data: null, error: error.message };
+     }
+
+     return { data: data as ProjectTaskRow[], error: null };
+}
