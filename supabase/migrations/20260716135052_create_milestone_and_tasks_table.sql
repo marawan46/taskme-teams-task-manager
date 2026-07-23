@@ -4,6 +4,21 @@
 
 create type task_status as enum ('TODO', 'IN_PROGRESS', 'UNDER_REVIEW', 'DONE');
 
+
+-- ============================================================
+-- Table: milestones
+-- ============================================================
+
+create table milestones (
+  id          uuid primary key default gen_random_uuid(),
+  project_id  uuid not null references projects(id) on delete cascade,
+  created_by  uuid not null references auth.users(id),
+  title       text not null,
+  description text default null,
+  due_date    timestamptz default null,
+  created_at  timestamptz default now(),
+  updated_at  timestamptz default now()
+);
 -- ============================================================
 -- Table: tasks
 -- ============================================================
@@ -68,20 +83,7 @@ create trigger on_task_status_change
 before update of status on tasks
 for each row execute function enforce_task_status_transition();
 
--- ============================================================
--- Table: milestones
--- ============================================================
 
-create table milestones (
-  id          uuid primary key default gen_random_uuid(),
-  project_id  uuid not null references projects(id) on delete cascade,
-  created_by  uuid not null references auth.users(id),
-  title       text not null,
-  description text default null,
-  due_date    timestamptz default null,
-  created_at  timestamptz default now(),
-  updated_at  timestamptz default now()
-);
 
 -- ============================================================
 -- Row Level Security — tasks
