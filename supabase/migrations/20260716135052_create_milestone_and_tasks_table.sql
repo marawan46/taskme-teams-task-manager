@@ -12,7 +12,7 @@ create table tasks (
   id              uuid primary key default gen_random_uuid(),
   project_id      uuid not null references projects(id) on delete cascade,
   parent_task_id  uuid references tasks(id) on delete set null,
-  milestone_id    uuid references milestones(id) on delete set null,
+  parent_milestone_id    uuid references milestones(id) on delete cascade,
   assigned_to     uuid not null references auth.users(id),
   created_by      uuid not null references auth.users(id),
   title           text not null,
