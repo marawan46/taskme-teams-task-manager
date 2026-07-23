@@ -5,7 +5,7 @@ import { PrivateTaskList } from "@/components/dashboard/private-task-list";
 
 export default function Page() {
   return (
-    <div className="flex min-h-screen flex-col p-8">
+    <div className="flex bg-primary-foreground min-h-screen flex-col p-8">
       <div className="mb-8">
         <DashboardGreeting />
       </div>
