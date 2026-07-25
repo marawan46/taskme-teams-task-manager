@@ -1,45 +1,17 @@
 import { Lock } from "lucide-react";
+import type { MyTask } from "@/types/index.types";
 import { PrivateTaskItem } from "./ui/private-task-item";
-
-type DotColor = "destructive" | "primary" | "muted-foreground";
-
-interface PrivateTask {
-  id: string;
-  title: string;
-  dueDate: string;
-  dotColor?: DotColor;
-}
+import { PrivateTaskListSkeleton } from "./ui/private-task-list-skeleton";
 
 interface PrivateTaskListProps {
-  tasks?: PrivateTask[];
-  count?: number;
+  tasks?: MyTask[] | null;
 }
 
-const defaultTasks: PrivateTask[] = [
-  {
-    id: "1",
-    title: "Review quarterly budget goals",
-    dueDate: "Oct 14",
-    dotColor: "destructive",
-  },
-  {
-    id: "2",
-    title: "Update personal portfolio cases",
-    dueDate: "Oct 18",
-    dotColor: "primary",
-  },
-  {
-    id: "3",
-    title: "Weekly deep-work sync setup",
-    dueDate: "Oct 22",
-    dotColor: "muted-foreground",
-  },
-];
+export function PrivateTaskList({ tasks }: PrivateTaskListProps) {
+  if (tasks == null) {
+    return <PrivateTaskListSkeleton />;
+  }
 
-export function PrivateTaskList({
-  tasks = defaultTasks,
-  count = 4,
-}: PrivateTaskListProps) {
   return (
     <section className="space-y-4">
       <div className="flex items-center justify-between">
@@ -48,25 +20,38 @@ export function PrivateTaskList({
             My Private Tasks
             <Lock className="size-4 text-muted-foreground" />
           </h3>
-          <span className="rounded bg-secondary px-2 py-0.5 text-[10px] font-bold text-secondary-foreground">
-            {count}
-          </span>
+          {tasks.length > 0 && (
+            <span className="rounded bg-secondary px-2 py-0.5 text-[10px] font-bold text-secondary-foreground">
+              {tasks.length}
+            </span>
+          )}
         </div>
-        <span className="cursor-pointer text-xs font-semibold text-muted-foreground transition-colors hover:text-secondary-foreground">
-          View all
-        </span>
+        {tasks.length > 0 && (
+          <span className="cursor-pointer text-xs font-semibold text-muted-foreground transition-colors hover:text-secondary-foreground">
+            View all
+          </span>
+        )}
       </div>
-      <div className="overflow-hidden rounded-xl border border-border bg-card">
-        {tasks.map((task, i) => (
-          <PrivateTaskItem
-            key={task.id}
-            title={task.title}
-            dueDate={task.dueDate}
-            dotColor={task.dotColor}
-            isLast={i === tasks.length - 1}
-          />
-        ))}
-      </div>
+
+      {tasks.length === 0 ? (
+        <div className="rounded-xl border border-border bg-card p-8 text-center">
+          <p className="text-sm text-muted-foreground">
+            No private tasks yet. Create one to keep track of personal to-dos.
+          </p>
+        </div>
+      ) : (
+        <div className="overflow-hidden rounded-xl border border-border bg-card">
+          {tasks.map((task, i) => (
+            <PrivateTaskItem
+              key={task.id}
+              title={task.name}
+              dueDate={task.due_date}
+              priority={task.priority}
+              isLast={i === tasks.length - 1}
+            />
+          ))}
+        </div>
+      )}
     </section>
   );
 }

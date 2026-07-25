@@ -4,23 +4,37 @@ type DotColor = "destructive" | "primary" | "muted-foreground";
 
 interface PrivateTaskItemProps {
   title: string;
-  dueDate: string;
-  dotColor?: DotColor;
+  dueDate: string | null;
+  priority: number;
   isLast?: boolean;
 }
 
-const dotColorMap: Record<DotColor, string> = {
+const dotColorMap: Record<number, DotColor> = {
+  0: "muted-foreground",
+  1: "primary",
+  2: "destructive",
+};
+
+const dotStyles: Record<DotColor, string> = {
   destructive: "bg-destructive",
   primary: "bg-primary",
   "muted-foreground": "bg-muted-foreground",
 };
 
+function formatDueDate(date: string | null): string {
+  if (!date) return "";
+  const d = new Date(date);
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
 export function PrivateTaskItem({
   title,
   dueDate,
-  dotColor = "muted-foreground",
+  priority,
   isLast = false,
 }: PrivateTaskItemProps) {
+  const dotColor = dotColorMap[priority] ?? "muted-foreground";
+
   return (
     <div
       className={cn(
@@ -36,10 +50,12 @@ export function PrivateTaskItem({
         {title}
       </span>
       <div className="flex items-center gap-6">
-        <span className="text-xs font-medium text-muted-foreground">
-          {dueDate}
-        </span>
-        <div className={cn("size-2 rounded-full", dotColorMap[dotColor])} />
+        {dueDate && (
+          <span className="text-xs font-medium text-muted-foreground">
+            {formatDueDate(dueDate)}
+          </span>
+        )}
+        <div className={cn("size-2 rounded-full", dotStyles[dotColor])} />
       </div>
     </div>
   );
