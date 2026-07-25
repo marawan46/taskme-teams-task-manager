@@ -1,4 +1,4 @@
-import { ApiResponse, type Task } from "@/types/index.types";
+import { ApiResponse, type Task, type MyTask } from "@/types/index.types";
 import { SupabaseClient } from "@supabase/supabase-js";
 
 export const fetchProjects = async (
@@ -48,4 +48,19 @@ export async function fetchProjectTasks(
      }
 
      return { data: data as ProjectTaskRow[], error: null };
+}
+
+export async function fetchMyTasks(
+     supabase: SupabaseClient,
+): Promise<{ data: MyTask[] | null; error: string | null }> {
+     const { data, error } = await supabase
+          .from("my_tasks")
+          .select("*")
+          .order("created_at", { ascending: false });
+
+     if (error) {
+          return { data: null, error: error.message };
+     }
+
+     return { data, error: null };
 }
