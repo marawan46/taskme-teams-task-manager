@@ -15,7 +15,7 @@ create table milestones (
   created_by  uuid not null references profiles(id),
   title       text not null,
   description text default null,
-  due_date    timestamptz default not null,
+  due_date    timestamptz not null,
   created_at  timestamptz default now(),
   updated_at  timestamptz default now()
 );
@@ -34,9 +34,9 @@ create table tasks (
   priority        smallint not null default 0 check (priority >= 0 and priority <= 3),
   description     text default null,
   status          task_status not null default 'TODO',
-  due_date        timestamptz default not null,
+  due_date        timestamptz not null,
   created_at      timestamptz default now(),
-  updated_at      timestamptz default now(),
+  updated_at      timestamptz default now()
 );
 -- ============================================================
 -- State machine: valid status transitions
