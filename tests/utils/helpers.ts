@@ -141,7 +141,7 @@ export async function clearTestData() {
 export async function createProjectAs(user: AuthenticatedUser, name: string) {
   const { data, error } = await user.client
     .from("projects")
-    .insert({ name, created_by: user.id })
+    .insert({ name,due_date:new Date(), created_by: user.id })
     .select()
     .single();
 
@@ -168,4 +168,52 @@ export async function addMemberToProject(
     user_id: userId,
     role,
   });
+}
+export async function createMilestoneAs(
+     user: AuthenticatedUser,
+     projectId: string,
+     title: string,
+) {
+     return user.client
+          .from("milestones")
+          .insert({ project_id: projectId, due_date:new Date(), created_by: user.id, title })
+          .select()
+          .single();
+}
+
+export async function getMilestonesAs(user: AuthenticatedUser, projectId: string) {
+     return user.client
+          .from("milestones")
+          .select("*")
+          .eq("project_id", projectId);
+}
+export async function createTaskAs(
+  user: AuthenticatedUser,
+  projectId: string,
+  title: string,
+  overrides: Record<string, unknown> = {},
+) {
+  const { data: milestone, error: milestoneError } = await createMilestoneAs(
+    user,
+    projectId,
+    `${title} - Milestone`,
+  );
+
+  if (milestoneError) {
+     return {data: null, error: milestoneError};
+  }
+
+  return user.client
+    .from("tasks")
+    .insert({
+      project_id: projectId,
+      created_by: user.id,
+      assigned_to: user.id,
+      parent_milestone_id: milestone.id,
+      due_date: new Date(),
+      title,
+      ...overrides,
+    })
+    .select()
+    .single();
 }

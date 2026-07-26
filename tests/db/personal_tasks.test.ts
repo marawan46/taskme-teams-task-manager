@@ -39,7 +39,7 @@ async function createTaskAs(
 ) {
   return u.client
     .from("my_tasks")
-    .insert({ name, user_id: u.id, ...overrides })
+    .insert({ name, user_id: u.id,due_date: new Date(), ...overrides })
     .select()
     .single();
 }
@@ -126,7 +126,6 @@ describe("my_tasks — INSERT", () => {
     expect(error).toBeNull();
     expect(data.description).toBeNull();
     expect(data.content).toBeNull();
-    expect(data.due_date).toBeNull();
   });
 });
 

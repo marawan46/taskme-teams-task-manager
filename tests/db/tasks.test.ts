@@ -6,6 +6,7 @@ import {
   clearTestData,
   createAuthenticatedUser,
   createProjectAs,
+  createTaskAs,
   type AuthenticatedUser,
 } from "../utils/helpers";
 
@@ -62,24 +63,7 @@ async function setupProject(
   return project;
 }
 
-async function createTaskAs(
-  user: AuthenticatedUser,
-  projectId: string,
-  title: string,
-  overrides: Record<string, unknown> = {},
-) {
-  return user.client
-    .from("tasks")
-    .insert({
-      project_id: projectId,
-      created_by: user.id,
-      assigned_to: user.id,
-      title,
-      ...overrides,
-    })
-    .select()
-    .single();
-}
+
 
 async function getTasksAs(user: AuthenticatedUser, projectId: string) {
   return user.client
