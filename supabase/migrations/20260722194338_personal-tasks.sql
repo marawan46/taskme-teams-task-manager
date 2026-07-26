@@ -9,7 +9,7 @@ create table my_tasks (
   description text default null,
   content     text default null,
   priority    smallint not null default 0 check (priority between 0 and 2),
-  due_date    timestamptz default not null,
+  due_date    timestamptz not null,
   created_at  timestamptz default now(),
   updated_at  timestamptz default now()
 );
