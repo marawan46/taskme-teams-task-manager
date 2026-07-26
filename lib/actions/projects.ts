@@ -36,6 +36,183 @@ const DeleteProjectSchema = z.object({
      id: z.uuid("Invalid project ID"),
 });
 
+export async function getProjects(): Promise<ApiResponse> {
+     const cookieStore = await cookies();
+     const supabase = createClient(cookieStore);
+
+     const {
+          data: { user },
+     } = await supabase.auth.getUser();
+
+     if (!user) {
+          return {
+               data: null,
+               status: "error",
+               error: {
+                    code: 401,
+                    message: "Authentication required",
+               },
+          };
+     }
+
+     const { data, error } = await supabase
+          .from("projects")
+          .select(
+               `
+               *,
+               project_members (
+                    user_id,
+                    profiles ( full_name, avatar_url )
+               )
+          `,
+          )
+          .order("created_at", { ascending: false });
+
+     if (error) {
+          return {
+               data: null,
+               status: "error",
+               error: {
+                    code: 400,
+                    message: error.message,
+               },
+          };
+     }
+
+     const projectsWithMembers = data.map((project) => {
+          const members = project.project_members.map((pm: any) => ({
+               full_name: pm.profiles?.full_name ?? null,
+               avatar_url: pm.profiles?.avatar_url ?? null,
+          }));
+          return {
+               ...project,
+               members,
+               memberCount: project.project_members.length,
+          };
+     });
+
+     return {
+          error: null,
+          status: "success",
+          data: projectsWithMembers,
+     };
+}
+
+export async function getProjectDetails(
+     projectId: string,
+): Promise<ApiResponse> {
+     const cookieStore = await cookies();
+     const supabase = createClient(cookieStore);
+
+     const {
+          data: { user },
+     } = await supabase.auth.getUser();
+
+     if (!user) {
+          return {
+               data: null,
+               status: "error",
+               error: {
+                    code: 401,
+                    message: "Authentication required",
+               },
+          };
+     }
+
+     const [projectResult, milestonesResult, tasksResult, membersResult] =
+          await Promise.all([
+               supabase
+                    .from("projects")
+                    .select("*")
+                    .eq("id", projectId)
+                    .single(),
+               supabase
+                    .from("milestones")
+                    .select("*")
+                    .eq("project_id", projectId)
+                    .order("created_at", { ascending: true }),
+               supabase
+                    .from("tasks")
+                    .select("id, status, parent_milestone_id")
+                    .eq("project_id", projectId),
+               supabase
+                    .from("project_members")
+                    .select("user_id, role, profiles(full_name, avatar_url)")
+                    .eq("project_id", projectId),
+          ]);
+
+     if (projectResult.error || !projectResult.data) {
+          return {
+               data: null,
+               status: "error",
+               error: {
+                    code: 404,
+                    message:
+                         projectResult.error?.message ?? "Project not found",
+               },
+          };
+     }
+
+     const tasks = tasksResult.data ?? [];
+     const milestones = milestonesResult.data ?? [];
+     const members = membersResult.data ?? [];
+
+     const activeTasks = tasks.filter((t) => t.status !== "DONE").length;
+     const doneTasks = tasks.filter((t) => t.status === "DONE").length;
+     const totalTasks = tasks.length;
+     const progress =
+          totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
+
+     const milestonesWithStatus = milestones.map((m) => {
+          const milestoneTasks = tasks.filter(
+               (t) => t.parent_milestone_id === m.id,
+          );
+          const milestoneDone = milestoneTasks.filter(
+               (t) => t.status === "DONE",
+          ).length;
+          const milestoneTotal = milestoneTasks.length;
+          const milestoneProgress =
+               milestoneTotal > 0
+                    ? Math.round((milestoneDone / milestoneTotal) * 100)
+                    : 0;
+
+          let status: "completed" | "in_progress" | "upcoming" = "upcoming";
+          if (milestoneProgress === 100 && milestoneTotal > 0) {
+               status = "completed";
+          } else if (milestoneTotal > 0) {
+               status = "in_progress";
+          }
+
+          return {
+               ...m,
+               status,
+               taskCount: milestoneTotal,
+               progress: milestoneProgress,
+          };
+     });
+
+     const memberData = members.map((m: any) => ({
+          user_id: m.user_id,
+          role: m.role,
+          full_name: m.profiles?.full_name ?? null,
+          avatar_url: m.profiles?.avatar_url ?? null,
+     }));
+
+     return {
+          error: null,
+          status: "success",
+          data: {
+               project: projectResult.data,
+               milestones: milestonesWithStatus,
+               activeTasks,
+               totalTasks,
+               progress,
+               members: memberData,
+               memberCount: memberData.length,
+          },
+     };
+}
+
 export async function createProject(
      input: z.infer<typeof CreateProjectSchema>,
      supabaseClient: SupabaseClient,
@@ -78,7 +255,9 @@ export async function createProject(
                name,
                description: description || null,
                created_by: user.id,
-          }).select().single();
+          })
+          .select()
+          .single();
      if (error) {
           return {
                status: "error",
