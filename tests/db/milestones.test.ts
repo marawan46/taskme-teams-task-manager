@@ -3,9 +3,10 @@ import { afterAll, beforeEach, describe, expect, test } from "vitest";
 import dotenv from "dotenv";
 import {
      addMemberToProject,
-     clearTestData,
      createAuthenticatedUser,
      createProjectAs,
+     createMilestoneAs,
+     getMilestonesAs,
      type AuthenticatedUser,
 } from "../utils/helpers";
 
@@ -65,24 +66,7 @@ async function setupProject(
      return project;
 }
 
-async function createMilestoneAs(
-     user: AuthenticatedUser,
-     projectId: string,
-     title: string,
-) {
-     return user.client
-          .from("milestones")
-          .insert({ project_id: projectId, created_by: user.id, title })
-          .select()
-          .single();
-}
 
-async function getMilestonesAs(user: AuthenticatedUser, projectId: string) {
-     return user.client
-          .from("milestones")
-          .select("*")
-          .eq("project_id", projectId);
-}
 
 // ============================================================
 // SELECT
