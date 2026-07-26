@@ -36,6 +36,7 @@ create table projects (
   id          uuid primary key default gen_random_uuid(),
   name        text not null,
   description text default null,
+  due_date    timestamptz not null,
   created_by  uuid not null references profiles(id) on delete cascade,
   created_at  timestamptz default now(),
   updated_at  timestamptz default now()
