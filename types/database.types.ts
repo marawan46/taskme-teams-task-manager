@@ -39,7 +39,7 @@ export type Database = {
           created_at: string | null
           created_by: string
           description: string | null
-          due_date: string | null
+          due_date: string
           id: string
           project_id: string
           title: string
@@ -49,7 +49,7 @@ export type Database = {
           created_at?: string | null
           created_by: string
           description?: string | null
-          due_date?: string | null
+          due_date: string
           id?: string
           project_id: string
           title: string
@@ -59,13 +59,20 @@ export type Database = {
           created_at?: string | null
           created_by?: string
           description?: string | null
-          due_date?: string | null
+          due_date?: string
           id?: string
           project_id?: string
           title?: string
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "milestones_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "milestones_project_id_fkey"
             columns: ["project_id"]
@@ -80,7 +87,7 @@ export type Database = {
           content: string | null
           created_at: string | null
           description: string | null
-          due_date: string | null
+          due_date: string
           id: string
           name: string
           priority: number
@@ -91,7 +98,7 @@ export type Database = {
           content?: string | null
           created_at?: string | null
           description?: string | null
-          due_date?: string | null
+          due_date: string
           id?: string
           name: string
           priority?: number
@@ -102,14 +109,22 @@ export type Database = {
           content?: string | null
           created_at?: string | null
           description?: string | null
-          due_date?: string | null
+          due_date?: string
           id?: string
           name?: string
           priority?: number
           updated_at?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "my_tasks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -171,6 +186,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "project_invitations_invited_by_fkey"
+            columns: ["invited_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "project_invitations_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
@@ -202,6 +224,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "project_member_permissions_granted_by_fkey"
+            columns: ["granted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "project_member_permissions_project_id_user_id_fkey"
             columns: ["project_id", "user_id"]
@@ -238,6 +267,13 @@ export type Database = {
             referencedRelation: "projects"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "project_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       projects: {
@@ -245,6 +281,7 @@ export type Database = {
           created_at: string | null
           created_by: string
           description: string | null
+          due_date: string
           id: string
           name: string
           updated_at: string | null
@@ -253,6 +290,7 @@ export type Database = {
           created_at?: string | null
           created_by: string
           description?: string | null
+          due_date: string
           id?: string
           name: string
           updated_at?: string | null
@@ -261,11 +299,20 @@ export type Database = {
           created_at?: string | null
           created_by?: string
           description?: string | null
+          due_date?: string
           id?: string
           name?: string
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "projects_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tasks: {
         Row: {
@@ -273,9 +320,9 @@ export type Database = {
           created_at: string | null
           created_by: string
           description: string | null
-          due_date: string | null
+          due_date: string
           id: string
-          parent_milestone_id: string | null
+          parent_milestone_id: string
           parent_task_id: string | null
           priority: number
           project_id: string
@@ -288,9 +335,9 @@ export type Database = {
           created_at?: string | null
           created_by: string
           description?: string | null
-          due_date?: string | null
+          due_date: string
           id?: string
-          parent_milestone_id?: string | null
+          parent_milestone_id: string
           parent_task_id?: string | null
           priority?: number
           project_id: string
@@ -303,9 +350,9 @@ export type Database = {
           created_at?: string | null
           created_by?: string
           description?: string | null
-          due_date?: string | null
+          due_date?: string
           id?: string
-          parent_milestone_id?: string | null
+          parent_milestone_id?: string
           parent_task_id?: string | null
           priority?: number
           project_id?: string
@@ -314,6 +361,20 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "tasks_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "tasks_parent_milestone_id_fkey"
             columns: ["parent_milestone_id"]

@@ -2,7 +2,6 @@
 
 import { ApiResponse } from "@/types/index.types";
 import { createClient } from "@/utils/supabase/server";
-import { SupabaseClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { z } from "zod";
 
@@ -16,6 +15,9 @@ const CreateProjectSchema = z.object({
           .max(1000, "Description must be 1000 characters or less")
           .optional()
           .nullable(),
+     due_date: z.coerce
+          .date()
+          .min(new Date(), "Due date must be in the future"),
 });
 
 const UpdateProjectSchema = z.object({
@@ -30,6 +32,7 @@ const UpdateProjectSchema = z.object({
           .max(1000, "Description must be 1000 characters or less")
           .optional()
           .nullable(),
+     due_date: z.coerce.date().optional(),
 });
 
 const DeleteProjectSchema = z.object({
@@ -62,6 +65,7 @@ export async function getProjects(): Promise<ApiResponse> {
                *,
                project_members (
                     user_id,
+                    role,
                     profiles ( full_name, avatar_url )
                )
           `,
@@ -83,6 +87,7 @@ export async function getProjects(): Promise<ApiResponse> {
           const members = project.project_members.map((pm: any) => ({
                full_name: pm.profiles?.full_name ?? null,
                avatar_url: pm.profiles?.avatar_url ?? null,
+               role: pm.role,
           }));
           return {
                ...project,
@@ -215,7 +220,6 @@ export async function getProjectDetails(
 
 export async function createProject(
      input: z.infer<typeof CreateProjectSchema>,
-     supabaseClient: SupabaseClient,
 ): Promise<ApiResponse> {
      const validation = CreateProjectSchema.safeParse(input);
 
@@ -230,9 +234,10 @@ export async function createProject(
           };
      }
 
-     const { name, description } = validation.data;
+     const { name, description, due_date } = validation.data;
 
-     const supabase = supabaseClient;
+     const cookieStore = await cookies();
+     const supabase = createClient(cookieStore);
 
      const {
           data: { user },
@@ -254,6 +259,7 @@ export async function createProject(
           .insert({
                name,
                description: description || null,
+               due_date: due_date.toISOString(),
                created_by: user.id,
           })
           .select()
@@ -318,6 +324,9 @@ export async function updateProject(
                ...(updateData.name !== undefined && { name: updateData.name }),
                ...(updateData.description !== undefined && {
                     description: updateData.description,
+               }),
+               ...(updateData.due_date !== undefined && {
+                    due_date: updateData.due_date.toISOString(),
                }),
                updated_at: new Date().toISOString(),
           })
