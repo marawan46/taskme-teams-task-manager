@@ -7,9 +7,11 @@ import {
      BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { MilestoneCard } from "@/components/projects/milestone-card";
+import { CreateMilestoneDialog } from "@/components/milestones/create-milestone-dialog";
 import { Users } from "lucide-react";
 import { getProjectDetails } from "@/lib/actions/projects";
 import { notFound } from "next/navigation";
+import { formatTimeRemaining } from "@/lib/helpers";
 
 export default async function ProjectDetailPage({
      params,
@@ -32,10 +34,8 @@ export default async function ProjectDetailPage({
           memberCount,
      } = response.data;
 
-     const timeRemaining = project.updated_at
-          ? `${Math.max(0, Math.ceil((new Date(project.updated_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))} days`
-          : "--";
-
+     const timeRemaining = formatTimeRemaining(project.due_date);
+          
      return (
           <div className="flex bg-primary-foreground min-h-screen flex-col p-8">
                <div className="mb-8">
@@ -125,6 +125,12 @@ export default async function ProjectDetailPage({
 
                {/* Milestones list */}
                <div className="space-y-6">
+                    <div className="flex items-center justify-between">
+                         <h2 className="text-2xl font-heading font-bold text-foreground">
+                              Milestones
+                         </h2>
+                         <CreateMilestoneDialog projectId={projectId} />
+                    </div>
                     {milestones.length === 0 ? (
                          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border py-20">
                               <p className="text-sm text-muted-foreground">

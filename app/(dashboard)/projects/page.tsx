@@ -7,6 +7,7 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { ProjectCard } from "@/components/projects/project-card";
+import { CreateProjectDialog } from "@/components/projects/create-project-dialog";
 import { FolderOpen } from "lucide-react";
 import { getProjects } from "@/lib/actions/projects";
 
@@ -47,6 +48,7 @@ export default async function ProjectsPage() {
               </p>
             </div>
           </div>
+          <CreateProjectDialog />
         </div>
       </div>
 
