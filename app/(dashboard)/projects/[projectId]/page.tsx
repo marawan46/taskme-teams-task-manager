@@ -13,6 +13,7 @@ import { getProjectDetails } from "@/lib/actions/projects";
 import { notFound } from "next/navigation";
 import { formatTimeRemaining } from "@/lib/helpers";
 
+
 export default async function ProjectDetailPage({
      params,
 }: {
@@ -129,7 +130,7 @@ export default async function ProjectDetailPage({
                          <h2 className="text-2xl font-heading font-bold text-foreground">
                               Milestones
                          </h2>
-                         <CreateMilestoneDialog projectId={projectId} />
+                          <CreateMilestoneDialog projectId={projectId} />
                     </div>
                     {milestones.length === 0 ? (
                          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border py-20">

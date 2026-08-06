@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ModalWrapper } from "@/components/modal-wrapper";
 import { MilestoneForm } from "./milestone-form";
 import { PlusIcon } from "lucide-react";
-
+import { Can } from "@casl/react";
 interface CreateMilestoneDialogProps {
      projectId: string;
 }
@@ -16,7 +16,7 @@ export function CreateMilestoneDialog({
      const [open, setOpen] = useState(false);
 
      return (
-          <>
+          <Can I="add" a="Milestones">
                <Button onClick={() => setOpen(true)}>
                     <PlusIcon data-icon="inline-start" />
                     New Milestone
@@ -34,6 +34,6 @@ export function CreateMilestoneDialog({
                          onSuccess={() => setOpen(false)}
                     />
                </ModalWrapper>
-          </>
+          </Can>
      );
 }
