@@ -39,7 +39,6 @@ export function createAbilityForUser(permissions: string[]) {
                     subject = (normalized.charAt(0).toUpperCase() +
                          normalized.slice(1)) as Subject;
           }
-          console.log(`Mapping permission: ${perm} -> Action: ${actionRaw}, Subject: ${subject}`);
           can(actionRaw as Action, subject);
      });
 

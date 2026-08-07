@@ -13,7 +13,6 @@ import { getProjectDetails } from "@/lib/actions/projects";
 import { notFound } from "next/navigation";
 import { formatTimeRemaining } from "@/lib/helpers";
 
-
 export default async function ProjectDetailPage({
      params,
 }: {
@@ -30,13 +29,13 @@ export default async function ProjectDetailPage({
           project,
           milestones,
           activeTasks,
-          totalTasks,
           progress,
+          members,
           memberCount,
      } = response.data;
 
      const timeRemaining = formatTimeRemaining(project.due_date);
-          
+
      return (
           <div className="flex bg-primary-foreground min-h-screen flex-col p-8">
                <div className="mb-8">
@@ -130,7 +129,7 @@ export default async function ProjectDetailPage({
                          <h2 className="text-2xl font-heading font-bold text-foreground">
                               Milestones
                          </h2>
-                          <CreateMilestoneDialog projectId={projectId} />
+                         <CreateMilestoneDialog projectId={projectId} />
                     </div>
                     {milestones.length === 0 ? (
                          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border py-20">
@@ -143,6 +142,11 @@ export default async function ProjectDetailPage({
                               <MilestoneCard
                                    key={milestone.id}
                                    milestone={milestone}
+                                   projectId={projectId}
+                                   members={members.map((m: any) => ({
+                                        id: m.user_id,
+                                        full_name: m.full_name,
+                                   }))}
                                    status={milestone.status}
                                    taskCount={milestone.taskCount}
                                    progress={milestone.progress}

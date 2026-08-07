@@ -138,8 +138,13 @@ export async function getProjectDetails(
                     .order("created_at", { ascending: true }),
                supabase
                     .from("tasks")
-                    .select("id, status, parent_milestone_id")
-                    .eq("project_id", projectId),
+                    .select(
+                         `*,
+                         assigned_profile:assigned_to ( full_name, avatar_url )
+                    `,
+                    )
+                    .eq("project_id", projectId)
+                    .order("due_date", { ascending: true }),
                supabase
                     .from("project_members")
                     .select("user_id, role, profiles(full_name, avatar_url)")
@@ -193,6 +198,7 @@ export async function getProjectDetails(
                status,
                taskCount: milestoneTotal,
                progress: milestoneProgress,
+               tasks: milestoneTasks,
           };
      });
 
