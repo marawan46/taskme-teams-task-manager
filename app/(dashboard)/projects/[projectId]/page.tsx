@@ -29,13 +29,13 @@ export default async function ProjectDetailPage({
           project,
           milestones,
           activeTasks,
-          totalTasks,
           progress,
+          members,
           memberCount,
      } = response.data;
 
      const timeRemaining = formatTimeRemaining(project.due_date);
-          
+
      return (
           <div className="flex bg-primary-foreground min-h-screen flex-col p-8">
                <div className="mb-8">
@@ -142,6 +142,11 @@ export default async function ProjectDetailPage({
                               <MilestoneCard
                                    key={milestone.id}
                                    milestone={milestone}
+                                   projectId={projectId}
+                                   members={members.map((m: any) => ({
+                                        id: m.user_id,
+                                        full_name: m.full_name,
+                                   }))}
                                    status={milestone.status}
                                    taskCount={milestone.taskCount}
                                    progress={milestone.progress}
