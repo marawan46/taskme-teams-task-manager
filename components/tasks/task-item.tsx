@@ -1,10 +1,6 @@
 "use client";
 
-import {
-     Avatar,
-     AvatarFallback,
-     AvatarImage,
-} from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
      Collapsible,
      CollapsibleContent,
@@ -88,9 +84,27 @@ export function TaskItem({
      return (
           <Collapsible defaultOpen>
                <div
-                    className="flex items-center gap-2 px-3 py-2.5"
+                    className="relative flex items-center gap-2 px-3 py-2.5"
                     style={{ paddingLeft: `${8 + depth * 12}px` }}
                >
+                     {depth > 0 && (
+                          <>
+                               <span
+                                    aria-hidden
+                                    className="pointer-events-none absolute bottom-1/2 left-0 top-0 w-px bg-border"
+                               />
+                               <span
+                                    aria-hidden
+                                    className="pointer-events-none absolute left-0 top-1/2 h-px -translate-y-1/2 bg-border"
+                                    style={{
+                                         width: `${
+                                              (hasChildren ? 44 : 36) +
+                                              depth * 12
+                                         }px`,
+                                    }}
+                               />
+                          </>
+                     )}
                     {hasChildren ? (
                          <CollapsibleTrigger
                               render={
@@ -123,9 +137,13 @@ export function TaskItem({
                                    {task.title}
                               </p>
                               <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                   <span>{assignee?.full_name ?? "Unassigned"}</span>
+                                   <span>
+                                        {assignee?.full_name ?? "Unassigned"}
+                                   </span>
                                    <span>&bull;</span>
-                                   <span>{formatTimeRemaining(task.due_date)}</span>
+                                   <span>
+                                        {formatTimeRemaining(task.due_date)}
+                                   </span>
                               </div>
                          </div>
                     </div>
@@ -166,17 +184,19 @@ export function TaskItem({
 
                {hasChildren && (
                     <CollapsibleContent>
-                         <ul className="border-l border-border ms-[2.15rem]">
+                         <ul style={{ marginLeft: `${22 + depth * 12}px` }}>
                               {childrenTasks.map((child) => (
-                                   <TaskItem
-                                        key={child.id}
-                                        task={child}
-                                        childrenByParent={childrenByParent}
-                                        projectId={projectId}
-                                        milestoneId={milestoneId}
-                                        members={members}
-                                        depth={depth + 1}
-                                   />
+                                   <li key={child.id}>
+                                        <TaskItem
+                                             key={child.id}
+                                             task={child}
+                                             childrenByParent={childrenByParent}
+                                             projectId={projectId}
+                                             milestoneId={milestoneId}
+                                             members={members}
+                                             depth={depth + 1}
+                                        />
+                                   </li>
                               ))}
                          </ul>
                     </CollapsibleContent>
