@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { ProjectCardMenu } from "./project-card-menu";
 import type { Project } from "@/types/index.types";
+import { getInitials } from "@/lib/helpers";
 
 interface ProjectCardMembers {
      full_name: string | null;
@@ -26,16 +27,6 @@ function formatDate(date: string | null): string {
           day: "numeric",
           year: "numeric",
      });
-}
-
-function getInitials(name: string | null): string {
-     if (!name) return "?";
-     return name
-          .split(" ")
-          .map((n) => n[0])
-          .join("")
-          .toUpperCase()
-          .slice(0, 2);
 }
 
 export function ProjectCard({
