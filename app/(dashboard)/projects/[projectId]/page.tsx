@@ -8,10 +8,17 @@ import {
 } from "@/components/ui/breadcrumb";
 import { MilestoneCard } from "@/components/projects/milestone-card";
 import { CreateMilestoneDialog } from "@/components/milestones/create-milestone-dialog";
-import { Users } from "lucide-react";
 import { getProjectDetails } from "@/lib/actions/projects";
 import { notFound } from "next/navigation";
 import { formatTimeRemaining } from "@/lib/helpers";
+import {
+     Avatar,
+     AvatarFallback,
+     AvatarImage,
+     AvatarGroup,
+     AvatarGroupCount,
+} from "@/components/ui/avatar";
+import { getInitials } from "@/lib/helpers";
 
 export default async function ProjectDetailPage({
      params,
@@ -35,6 +42,9 @@ export default async function ProjectDetailPage({
      } = response.data;
 
      const timeRemaining = formatTimeRemaining(project.due_date);
+
+     const displayMembers = members.slice(0, 3);
+     const overflowCount = Math.max(0, memberCount - 3);
 
      return (
           <div className="flex bg-primary-foreground min-h-screen flex-col p-8">
@@ -113,10 +123,39 @@ export default async function ProjectDetailPage({
                                         Collaborators
                                    </span>
                                    <div className="flex items-center gap-2 mt-1">
-                                        <Users className="size-4 text-muted-foreground" />
-                                        <span className="text-xl font-heading font-bold text-foreground">
-                                             {memberCount}
-                                        </span>
+                                        {memberCount > 0 && (
+                                             <AvatarGroup>
+                                                  {displayMembers.map(
+                                                       (m: any, i: number) => (
+                                                            <Avatar
+                                                                 key={i}
+                                                                 size="sm"
+                                                            >
+                                                                 <AvatarImage
+                                                                      src={
+                                                                           m.avatar_url ??
+                                                                           undefined
+                                                                      }
+                                                                      alt={
+                                                                           m.full_name ??
+                                                                           ""
+                                                                      }
+                                                                 />
+                                                                 <AvatarFallback>
+                                                                      {getInitials(
+                                                                           m.full_name,
+                                                                      )}
+                                                                 </AvatarFallback>
+                                                            </Avatar>
+                                                       ),
+                                                  )}
+                                                  {overflowCount > 0 && (
+                                                       <AvatarGroupCount>
+                                                            +{overflowCount}
+                                                       </AvatarGroupCount>
+                                                  )}
+                                             </AvatarGroup>
+                                        )}
                                    </div>
                               </div>
                          </div>
