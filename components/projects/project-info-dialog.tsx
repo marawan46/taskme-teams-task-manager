@@ -3,6 +3,8 @@
 import { ModalWrapper } from "@/components/modal-wrapper"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Calendar, Users } from "lucide-react"
+import { getInitials } from "@/lib/helpers";
+
 
 interface ProjectInfoMember {
   full_name: string | null
@@ -31,16 +33,6 @@ function formatDate(date: string | null): string {
     day: "numeric",
     year: "numeric",
   })
-}
-
-function getInitials(name: string | null): string {
-  if (!name) return "?"
-  return name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2)
 }
 
 const ROLE_STYLES: Record<string, string> = {

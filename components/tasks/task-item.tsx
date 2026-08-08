@@ -13,7 +13,7 @@ import { formatTimeRemaining } from "@/lib/helpers";
 import type { Task, TaskStatus } from "@/types/index.types";
 import { TaskDialog } from "./task-dialog";
 import type { TaskMember } from "./task-form";
-
+import { getInitials } from "@/lib/helpers";
 export type MilestoneTask = Task & {
      assigned_profile: {
           full_name: string | null;
@@ -49,16 +49,6 @@ const taskStatusLabels: Record<TaskStatus, string> = {
      DONE: "Done",
 };
 
-function getInitials(name: string | null | undefined): string {
-     if (!name) return "?";
-     return name
-          .split(" ")
-          .filter(Boolean)
-          .slice(0, 2)
-          .map((n) => n[0])
-          .join("")
-          .toUpperCase();
-}
 
 interface TaskItemProps {
      task: MilestoneTask;
@@ -129,7 +119,7 @@ export function TaskItem({
                                    alt={assignee?.full_name ?? ""}
                               />
                               <AvatarFallback>
-                                   {getInitials(assignee?.full_name)}
+                                   {getInitials(assignee?.full_name ?? "Unassigned")}
                               </AvatarFallback>
                          </Avatar>
                          <div className="min-w-0">
