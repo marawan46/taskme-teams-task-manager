@@ -1,9 +1,9 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { createHash, randomBytes } from "crypto";
 import { beforeEach, describe, expect, test } from "vitest";
 import dotenv from "dotenv";
 import {
   addMemberToProject,
-  clearTestData,
   createAuthenticatedUser,
   createProjectAs,
   type AuthenticatedUser,
@@ -18,13 +18,12 @@ let outsider: AuthenticatedUser;
 let admin: SupabaseClient;
 
 beforeEach(async () => {
-
   admin = createClient(
     process.env.SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
     { auth: { autoRefreshToken: false, persistSession: false } },
   );
-const testRunId = Date.now() + Math.random().toString(36).slice(2, 9);
+  const testRunId = Date.now() + Math.random().toString(36).slice(2, 9);
 
   owner = await createAuthenticatedUser(
     `owner${testRunId}@test.com`,
@@ -48,6 +47,17 @@ const testRunId = Date.now() + Math.random().toString(36).slice(2, 9);
   );
 });
 
+// Raw token (256 bits) + its SHA-256 hex hash — matches what the app does.
+function makeToken() {
+  const token = randomBytes(32).toString("base64url");
+  const hash = createHash("sha256").update(token).digest("hex");
+  return { token, hash };
+}
+
+function makeHash(token: string) {
+  return createHash("sha256").update(token).digest("hex");
+}
+
 async function insertInvitationAs(
   user: AuthenticatedUser,
   projectId: string,
@@ -59,6 +69,7 @@ async function insertInvitationAs(
     email,
     role,
     invited_by: user.id,
+    token_hash: makeToken().hash,
   });
 }
 
@@ -66,7 +77,7 @@ async function getInvitationByToken(token: string) {
   const { data, error } = await admin
     .from("project_invitations")
     .select("*")
-    .eq("token", token)
+    .eq("token_hash", makeHash(token))
     .single();
 
   return { data, error };
@@ -80,11 +91,12 @@ describe("project_invitations — table constraints", () => {
   test("email is stored as lowercase", async () => {
     const { data: project } = await createProjectAs(owner, "Invite Project");
 
-    const {error} =await owner.client.from("project_invitations").insert({
+    const { error } = await owner.client.from("project_invitations").insert({
       project_id: project.id,
       email: "UPPER@TEST.COM",
       role: "COLLABORATOR",
       invited_by: owner.id,
+      token_hash: makeToken().hash,
     });
 
     expect(error).toBeDefined();
@@ -98,6 +110,7 @@ describe("project_invitations — table constraints", () => {
       email: "test@test.com",
       role: "OWNER",
       invited_by: owner.id,
+      token_hash: makeToken().hash,
     });
 
     expect(error).not.toBeNull();
@@ -112,6 +125,7 @@ describe("project_invitations — table constraints", () => {
       role: "COLLABORATOR",
       invited_by: owner.id,
       status: "PENDING",
+      token_hash: makeToken().hash,
     });
 
     const { error } = await admin.from("project_invitations").insert({
@@ -120,6 +134,7 @@ describe("project_invitations — table constraints", () => {
       role: "COLLABORATOR",
       invited_by: owner.id,
       status: "PENDING",
+      token_hash: makeToken().hash,
     });
 
     expect(error).not.toBeNull();
@@ -134,6 +149,7 @@ describe("project_invitations — table constraints", () => {
       role: "COLLABORATOR",
       invited_by: owner.id,
       status: "EXPIRED",
+      token_hash: makeToken().hash,
     });
 
     const { error } = await admin.from("project_invitations").insert({
@@ -142,9 +158,30 @@ describe("project_invitations — table constraints", () => {
       role: "MANAGER",
       invited_by: owner.id,
       status: "PENDING",
+      token_hash: makeToken().hash,
     });
 
     expect(error).toBeNull();
+  });
+
+  test("only the token hash is stored, never the raw token", async () => {
+    const { data: project } = await createProjectAs(owner, "Hashed Token");
+    const { token, hash } = makeToken();
+
+    const { data: invitation } = await admin
+      .from("project_invitations")
+      .insert({
+        project_id: project.id,
+        email: "secret@test.com",
+        role: "COLLABORATOR",
+        invited_by: owner.id,
+        token_hash: hash,
+      })
+      .select()
+      .single();
+
+    expect(invitation.token_hash).toBe(hash);
+    expect(invitation.token_hash).not.toBe(token);
   });
 });
 
@@ -175,6 +212,7 @@ describe("project_invitations — RLS INSERT", () => {
         email: "someone@test.com",
         role: "COLLABORATOR",
         invited_by: outsider.id,
+        token_hash: makeToken().hash,
       });
 
     expect(error).not.toBeNull();
@@ -274,20 +312,105 @@ describe("project_invitations — RLS SELECT", () => {
 });
 
 // ============================================================
+// Rate limiting + already-member guard
+// ============================================================
+
+describe("prevent_invitation_abuse() — rate limiting", () => {
+  test("allows up to 50 invitations per inviter per 24h", async () => {
+    const { data: project } = await createProjectAs(owner, "Rate Limit Ok");
+
+    for (let i = 0; i < 50; i++) {
+      const { error } = await admin.from("project_invitations").insert({
+        project_id: project.id,
+        email: `rate${i}@test.com`,
+        role: "COLLABORATOR",
+        invited_by: owner.id,
+        token_hash: makeToken().hash,
+      });
+      expect(error).toBeNull();
+    }
+  });
+
+  test("blocks the 51st invitation within 24h", async () => {
+    const { data: project } = await createProjectAs(owner, "Rate Limit Block");
+
+    for (let i = 0; i < 50; i++) {
+      await admin.from("project_invitations").insert({
+        project_id: project.id,
+        email: `rate${i}@test.com`,
+        role: "COLLABORATOR",
+        invited_by: owner.id,
+        token_hash: makeToken().hash,
+      });
+    }
+
+    const { error } = await admin.from("project_invitations").insert({
+      project_id: project.id,
+      email: "over@test.com",
+      role: "COLLABORATOR",
+      invited_by: owner.id,
+      token_hash: makeToken().hash,
+    });
+
+    expect(error).not.toBeNull();
+  });
+
+  test("rate limit is enforced per inviter, not globally", async () => {
+    const { data: project } = await createProjectAs(owner, "Per Inviter");
+
+    for (let i = 0; i < 50; i++) {
+      await admin.from("project_invitations").insert({
+        project_id: project.id,
+        email: `rate${i}@test.com`,
+        role: "COLLABORATOR",
+        invited_by: owner.id,
+        token_hash: makeToken().hash,
+      });
+    }
+
+    // A different inviter is not blocked by the owner's usage.
+    const { error } = await admin.from("project_invitations").insert({
+      project_id: project.id,
+      email: "member-can-invite@test.com",
+      role: "COLLABORATOR",
+      invited_by: member.id,
+      token_hash: makeToken().hash,
+    });
+
+    expect(error).toBeNull();
+  });
+
+  test("cannot invite an email that is already an active member", async () => {
+    const { data: project } = await createProjectAs(owner, "Member Invite");
+    await addMemberToProject(project.id, member.id, "COLLABORATOR");
+
+    const { error } = await admin.from("project_invitations").insert({
+      project_id: project.id,
+      email: member.email,
+      role: "COLLABORATOR",
+      invited_by: owner.id,
+      token_hash: makeToken().hash,
+    });
+
+    expect(error).not.toBeNull();
+  });
+});
+
+// ============================================================
 // accept_project_invitation()
 // ============================================================
 
 describe("accept_project_invitation()", () => {
   async function setupInvitation() {
     const { data: project } = await createProjectAs(owner, "Accept Project");
-    const token = crypto.randomUUID();
+    const { token, hash } = makeToken();
 
     await admin.from("project_invitations").insert({
       project_id: project.id,
       email: invitee.email,
       role: "COLLABORATOR",
       invited_by: owner.id,
-      token,
+      token_hash: hash,
     });
 
     return { project, token };
@@ -306,15 +429,15 @@ describe("accept_project_invitation()", () => {
     expect(data[0].ok).toBe(true);
     expect(data[0].code).toBeNull();
 
-    const { data: member } = await admin
+    const { data: memberRow } = await admin
       .from("project_members")
       .select("*")
       .eq("project_id", project.id)
       .eq("user_id", invitee.id)
       .single();
 
-    expect(member).not.toBeNull();
-    expect(member.role).toBe("COLLABORATOR");
+    expect(memberRow).not.toBeNull();
+    expect(memberRow.role).toBe("COLLABORATOR");
   });
 
   test("invitation status changes to ACCEPTED after acceptance", async () => {
@@ -330,28 +453,29 @@ describe("accept_project_invitation()", () => {
   });
 
   test("invalid token returns not_found_or_used", async () => {
-    const fakeToken = crypto.randomUUID();
+    const { token, hash } = makeToken();
 
     const { data, error } = await invitee.client.rpc(
       "accept_project_invitation",
-      { p_token: fakeToken },
+      { p_token: token },
     );
 
     expect(error).toBeNull();
     expect(data[0].ok).toBe(false);
     expect(data[0].code).toBe("not_found_or_used");
+    expect(hash).not.toBeNull(); // token only ever existed in memory
   });
 
   test("expired invitation returns expired and sets status to EXPIRED", async () => {
     const { data: project } = await createProjectAs(owner, "Expired Invite");
-    const token = crypto.randomUUID();
+    const { token, hash } = makeToken();
 
     await admin.from("project_invitations").insert({
       project_id: project.id,
       email: invitee.email,
       role: "COLLABORATOR",
       invited_by: owner.id,
-      token,
+      token_hash: hash,
       expires_at: new Date(Date.now() - 1000).toISOString(),
     });
 
@@ -400,28 +524,28 @@ describe("accept_project_invitation()", () => {
 
   test("MANAGER role is granted on acceptance", async () => {
     const { data: project } = await createProjectAs(owner, "Manager Invite");
-    const token = crypto.randomUUID();
+    const { token, hash } = makeToken();
 
     await admin.from("project_invitations").insert({
       project_id: project.id,
       email: invitee.email,
       role: "MANAGER",
       invited_by: owner.id,
-      token,
+      token_hash: hash,
     });
 
     await invitee.client.rpc("accept_project_invitation", {
       p_token: token,
     });
 
-    const { data: member } = await admin
+    const { data: memberRow } = await admin
       .from("project_members")
       .select("role")
       .eq("project_id", project.id)
       .eq("user_id", invitee.id)
       .single();
 
-    expect(member?.role).toBe("MANAGER");
+    expect(memberRow?.role).toBe("MANAGER");
   });
 });
 
@@ -440,6 +564,7 @@ describe("sweep_expired_project_invitations()", () => {
         role: "COLLABORATOR",
         invited_by: owner.id,
         status: "PENDING",
+        token_hash: makeToken().hash,
         expires_at: new Date(Date.now() - 1000).toISOString(),
       },
       {
@@ -448,6 +573,7 @@ describe("sweep_expired_project_invitations()", () => {
         role: "COLLABORATOR",
         invited_by: owner.id,
         status: "PENDING",
+        token_hash: makeToken().hash,
         expires_at: new Date(Date.now() - 1000).toISOString(),
       },
     ]);
@@ -476,6 +602,7 @@ describe("sweep_expired_project_invitations()", () => {
       role: "COLLABORATOR",
       invited_by: owner.id,
       status: "ACCEPTED",
+      token_hash: makeToken().hash,
       expires_at: new Date(Date.now() - 1000).toISOString(),
     });
 
@@ -503,6 +630,7 @@ describe("sweep_expired_project_invitations()", () => {
       role: "COLLABORATOR",
       invited_by: owner.id,
       status: "PENDING",
+      token_hash: makeToken().hash,
       expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
     });
 

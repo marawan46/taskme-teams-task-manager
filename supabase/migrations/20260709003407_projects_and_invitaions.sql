@@ -67,7 +67,7 @@ create table project_invitations (
   email       text not null,
   role        project_role not null default 'COLLABORATOR',
   invited_by  uuid not null references profiles(id),
-  token       uuid not null default gen_random_uuid(),
+  token_hash     text not null,
   status      invitation_status not null default 'PENDING',
   expires_at  timestamptz not null default (now() + interval '7 days'),
   created_at  timestamptz default now(),
@@ -83,9 +83,8 @@ create unique index project_invitations_pending_email_idx
   on project_invitations (project_id, lower(email))
   where status = 'PENDING';
 
-create unique index project_invitations_token_idx
-  on project_invitations (token);
-
+create unique index project_invitations_token_hash_idx
+  on project_invitations (token_hash);
 -- ============================================================
 -- Row Level Security
 -- ============================================================
@@ -227,9 +226,7 @@ create policy project_invitations_select_relevant
 on project_invitations for select
 to authenticated
 using (
-  invited_by = auth.uid()
-  or has_permission(project_id, 'invite:members')
-  or coalesce(verified_email_for_current_user(), '') = email
+  has_permission(project_id, 'invite:members')
 );
 
 -- Creation is plain app-logic + RLS (a single insert with no multi-step
@@ -332,9 +329,8 @@ for each row execute function add_owner_on_project_create();
 -- ============================================================
 -- Invitation flow functions
 -- ============================================================
-
 create or replace function accept_project_invitation(
-  p_token uuid
+  p_token text
 )
 returns table (
   ok boolean,
@@ -363,7 +359,7 @@ begin
 
   select * into v_invitation
   from project_invitations
-  where token = p_token
+  where token_hash = encode(digest(p_token, 'sha256'), 'hex')
     and status = 'PENDING'
   for update;
 
@@ -405,6 +401,9 @@ exception
 end;
 $$;
 
+revoke all on function accept_project_invitation(text) from public;
+grant execute on function accept_project_invitation(text) to authenticated, service_role;
+
 create or replace function sweep_expired_project_invitations()
 returns integer
 language plpgsql
@@ -441,8 +440,8 @@ exception
 end;
 $$;
 
-revoke all on function accept_project_invitation(uuid) from public;
+revoke all on function accept_project_invitation(text) from public;
 revoke all on function sweep_expired_project_invitations() from public;
 
-grant execute on function accept_project_invitation(uuid) to authenticated, service_role;
+grant execute on function accept_project_invitation(text) to authenticated, service_role;
 grant execute on function sweep_expired_project_invitations() to service_role;

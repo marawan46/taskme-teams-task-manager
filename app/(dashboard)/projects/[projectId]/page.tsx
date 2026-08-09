@@ -19,6 +19,9 @@ import {
      AvatarGroupCount,
 } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/helpers";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { UsersIcon } from "lucide-react";
 
 export default async function ProjectDetailPage({
      params,
@@ -82,13 +85,27 @@ export default async function ProjectDetailPage({
                                    </p>
                               )}
                          </div>
-                         <div className="text-right">
-                              <span className="inline-flex items-center px-3 py-1 bg-secondary text-secondary-foreground rounded-full text-[10px] font-bold uppercase tracking-wider mb-2">
-                                   Overall Progress
-                              </span>
-                              <p className="text-3xl font-heading font-bold text-primary">
-                                   {progress}%
-                              </p>
+                         <div className="flex items-end gap-6">
+                              <Button
+                                   nativeButton={false}
+                                   variant="outline"
+                                   render={
+                                        <Link
+                                             href={`/projects/${projectId}/members`}
+                                        />
+                                   }
+                              >
+                                   <UsersIcon data-icon="inline-start" />
+                                   Members
+                              </Button>
+                              <div className="text-right">
+                                   <span className="inline-flex items-center px-3 py-1 bg-secondary text-secondary-foreground rounded-full text-[10px] font-bold uppercase tracking-wider mb-2">
+                                        Overall Progress
+                                   </span>
+                                   <p className="text-3xl font-heading font-bold text-primary">
+                                        {progress}%
+                                   </p>
+                              </div>
                          </div>
                     </div>
 
