@@ -76,6 +76,5 @@ export async function getUserPermissions(
      if (permError || !permData) {
           return [];
      }
-     console.log("Permissions fetched:", permData.map((p) => p.permission));
      return permData.map((p) => p.permission);
 }

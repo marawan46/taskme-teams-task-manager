@@ -34,7 +34,7 @@ const data = {
      navMain: [
           {
                title: "Dashboard",
-               url: "dashboard",
+               url: "/dashboard",
                icon: <LayoutPanelLeft />,
                isActive: true,
           },
@@ -45,12 +45,12 @@ const data = {
           },
           {
                title: "Projects",
-               url: "projects",
+               url: "/projects",
                icon: <FolderOpen />,
           },
           {
                title: "Reports",
-               url: "reports",
+               url: "/reports",
                icon: <ChartPie />,
           },
      ],
@@ -66,32 +66,6 @@ const data = {
                icon: <SendIcon />,
           },
      ],
-     // projects: [
-     //   {
-     //     name: "Design Engineering",
-     //     url: "#",
-     //     icon: (
-     //       <FrameIcon
-     //       />
-     //     ),
-     //   },
-     //   {
-     //     name: "Sales & Marketing",
-     //     url: "#",
-     //     icon: (
-     //       <PieChartIcon
-     //       />
-     //     ),
-     //   },
-     //   {
-     //     name: "Travel",
-     //     url: "#",
-     //     icon: (
-     //       <MapIcon
-     //       />
-     //     ),
-     //   },
-     // ],
 };
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
      return (
@@ -120,7 +94,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                </SidebarHeader>
                <SidebarContent>
                     <NavMain items={data.navMain} />
-                    {/* <NavProjects projects={data.projects} /> */}
                     <NavSecondary
                          items={data.navSecondary}
                          className="mt-auto"
