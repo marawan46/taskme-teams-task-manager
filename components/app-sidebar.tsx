@@ -99,9 +99,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                          className="mt-auto"
                     />
                </SidebarContent>
-               <SidebarFooter>
+               {/* <SidebarFooter>
                     <NavUser user={data.user} />
-               </SidebarFooter>
+               </SidebarFooter> */}
           </Sidebar>
      );
 }
