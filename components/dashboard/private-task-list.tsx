@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Lock } from "lucide-react";
 import type { MyTask } from "@/types/index.types";
 import { PrivateTaskItem } from "./ui/private-task-item";
@@ -27,9 +28,12 @@ export function PrivateTaskList({ tasks }: PrivateTaskListProps) {
           )}
         </div>
         {tasks.length > 0 && (
-          <span className="cursor-pointer text-xs font-semibold text-muted-foreground transition-colors hover:text-secondary-foreground">
+          <Link
+            href="/my-tasks"
+            className="cursor-pointer text-xs font-semibold text-muted-foreground transition-colors hover:text-secondary-foreground"
+          >
             View all
-          </span>
+          </Link>
         )}
       </div>
 

@@ -40,7 +40,7 @@ const data = {
           },
           {
                title: "My Tasks",
-               url: "my-tasks",
+               url: "/my-tasks",
                icon: <ClipboardCheck />,
           },
           {
