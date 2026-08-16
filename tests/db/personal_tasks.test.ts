@@ -32,14 +32,30 @@ beforeEach(async () => {
   );
 });
 
+async function createGroupAs(u: AuthenticatedUser, name = "General") {
+  return u.client
+    .from("my_task_groups")
+    .insert({ name, user_id: u.id })
+    .select()
+    .single();
+}
+
 async function createTaskAs(
   u: AuthenticatedUser,
   name: string,
   overrides: Record<string, unknown> = {},
 ) {
+  const { data: group } = await createGroupAs(u);
+
   return u.client
     .from("my_tasks")
-    .insert({ name, user_id: u.id,due_date: new Date(), ...overrides })
+    .insert({
+      name,
+      user_id: u.id,
+      group_id: group.id,
+      due_date: new Date(),
+      ...overrides,
+    })
     .select()
     .single();
 }
@@ -110,6 +126,33 @@ describe("my_tasks — INSERT", () => {
     expect(error).not.toBeNull();
   });
 
+  test("task requires a group", async () => {
+    const { error } = await user.client
+      .from("my_tasks")
+      .insert({ name: "No Group", user_id: user.id, due_date: new Date() })
+      .select()
+      .single();
+
+    expect(error).not.toBeNull();
+  });
+
+  test("task cannot be created in another user's group", async () => {
+    const { data: otherGroup } = await createGroupAs(other, "Other's Group");
+
+    const { error } = await user.client
+      .from("my_tasks")
+      .insert({
+        name: "Spoofed Group",
+        user_id: user.id,
+        group_id: otherGroup.id,
+        due_date: new Date(),
+      })
+      .select()
+      .single();
+
+    expect(error).not.toBeNull();
+  });
+
   test("user_id cannot be spoofed", async () => {
     const { error } = await user.client
       .from("my_tasks")
@@ -126,6 +169,7 @@ describe("my_tasks — INSERT", () => {
     expect(error).toBeNull();
     expect(data.description).toBeNull();
     expect(data.content).toBeNull();
+    expect(data.completed).toBe(false);
   });
 });
 
@@ -147,6 +191,45 @@ describe("my_tasks — UPDATE", () => {
     expect(error).toBeNull();
     expect(data.name).toBe("Updated");
     expect(data.priority).toBe(2);
+  });
+
+  test("user can toggle completed", async () => {
+    const { data: task } = await createTaskAs(user, "Toggle");
+
+    const { data: done, error: doneError } = await user.client
+      .from("my_tasks")
+      .update({ completed: true })
+      .eq("id", task.id)
+      .select()
+      .single();
+
+    expect(doneError).toBeNull();
+    expect(done.completed).toBe(true);
+
+    const { data: undone, error: undoneError } = await user.client
+      .from("my_tasks")
+      .update({ completed: false })
+      .eq("id", task.id)
+      .select()
+      .single();
+
+    expect(undoneError).toBeNull();
+    expect(undone.completed).toBe(false);
+  });
+
+  test("user cannot move task to another user's group", async () => {
+    const { data: task } = await createTaskAs(user, "Move Me");
+    const { data: otherGroup } = await createGroupAs(other, "Other's Group");
+
+    const { data, error } = await user.client
+      .from("my_tasks")
+      .update({ group_id: otherGroup.id })
+      .eq("id", task.id)
+      .select()
+      .single();
+
+    expect(error).not.toBeNull();
+    expect(data).toBeNull();
   });
 
   test("user cannot update other user's task", async () => {

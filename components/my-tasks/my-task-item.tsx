@@ -4,10 +4,10 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { formatTimeRemaining } from "@/lib/helpers";
-import { deleteMyTask } from "@/lib/actions/my-tasks";
+import { deleteMyTask, updateMyTask } from "@/lib/actions/my-tasks";
 import { MyTaskDialog } from "./my-task-dialog";
 import { Trash2 } from "lucide-react";
-import type { MyTask } from "@/types/index.types";
+import type { MyTask, MyTaskGroup } from "@/types/index.types";
 
 type DotColor = "destructive" | "primary" | "muted-foreground";
 
@@ -25,10 +25,15 @@ const dotStyles: Record<DotColor, string> = {
 
 interface MyTaskItemProps {
      task: MyTask;
+     groups?: MyTaskGroup[];
      isLast?: boolean;
 }
 
-export function MyTaskItem({ task, isLast = false }: MyTaskItemProps) {
+export function MyTaskItem({
+     task,
+     groups = [],
+     isLast = false,
+}: MyTaskItemProps) {
      const router = useRouter();
      const dotColor = dotColorMap[task.priority] ?? "muted-foreground";
 
@@ -40,14 +45,37 @@ export function MyTaskItem({ task, isLast = false }: MyTaskItemProps) {
           }
      };
 
+     const handleToggle = async () => {
+          const res = await updateMyTask({
+               id: task.id,
+               completed: !task.completed,
+          });
+          if (res.status === "success") {
+               router.refresh();
+          }
+     };
+
      return (
           <div
                className={cn(
                     "group flex items-center gap-4 px-6 py-4 transition-colors hover:bg-muted/20",
+                    task.completed && "opacity-60",
                     !isLast && "border-b border-border",
                )}
           >
-               <span className="grow min-w-0 text-sm font-medium text-foreground truncate">
+               <input
+                    type="checkbox"
+                    aria-label={task.completed ? "Mark as not done" : "Mark as done"}
+                    checked={task.completed}
+                    onChange={handleToggle}
+                    className="size-4 shrink-0 cursor-pointer accent-primary"
+               />
+               <span
+                    className={cn(
+                         "grow min-w-0 text-sm font-medium text-foreground truncate",
+                         task.completed && "text-muted-foreground line-through",
+                    )}
+               >
                     {task.name}
                </span>
                {task.due_date && (
@@ -69,7 +97,7 @@ export function MyTaskItem({ task, isLast = false }: MyTaskItemProps) {
                     )}
                />
                <div className="flex shrink-0 items-center gap-1">
-                    <MyTaskDialog task={task} trigger="icon" />
+                    <MyTaskDialog task={task} groups={groups} trigger="icon" />
                     <Button
                          variant="ghost"
                          size="icon-sm"

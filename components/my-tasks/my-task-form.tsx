@@ -11,10 +11,15 @@ import {
      deleteMyTask,
      updateMyTask,
 } from "@/lib/actions/my-tasks";
-import type { ApiResponse, MyTask } from "@/types/index.types";
+import type {
+     ApiResponse,
+     MyTask,
+     MyTaskGroup,
+} from "@/types/index.types";
 
 interface MyTaskFormProps {
      task?: MyTask | null;
+     groups: MyTaskGroup[];
      onSuccess?: () => void;
 }
 
@@ -23,7 +28,11 @@ type FormState = ApiResponse;
 const selectClassName =
      "flex w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1.5 text-base transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 md:text-sm dark:bg-input/30";
 
-export function MyTaskForm({ task = null, onSuccess }: MyTaskFormProps) {
+export function MyTaskForm({
+     task = null,
+     groups,
+     onSuccess,
+}: MyTaskFormProps) {
      const router = useRouter();
      const calledRef = useRef(false);
      const isEdit = Boolean(task);
@@ -36,6 +45,7 @@ export function MyTaskForm({ task = null, onSuccess }: MyTaskFormProps) {
                          (formData.get("description") as string) || null,
                     priority: Number(formData.get("priority") ?? 0),
                     due_date: new Date(formData.get("due_date") as string),
+                    group_id: formData.get("group_id") as string,
                };
 
                if (task) {
@@ -77,8 +87,30 @@ export function MyTaskForm({ task = null, onSuccess }: MyTaskFormProps) {
                               name="name"
                               placeholder="e.g. Buy groceries"
                               required
-                              defaultValue={task?.name ?? ""}
-                         />
+                               defaultValue={task?.name ?? ""}
+                          />
+                     </Field>
+
+                    <Field>
+                         <FieldLabel htmlFor="group_id">Group</FieldLabel>
+                         <select
+                              id="group_id"
+                              name="group_id"
+                              required
+                              defaultValue={task?.group_id ?? groups[0]?.id}
+                              className={selectClassName}
+                         >
+                              {groups.length === 0 && (
+                                   <option value="" disabled>
+                                        Create a group first
+                                   </option>
+                              )}
+                              {groups.map((group) => (
+                                   <option key={group.id} value={group.id}>
+                                        {group.name}
+                                   </option>
+                              ))}
+                         </select>
                     </Field>
 
                     <Field>

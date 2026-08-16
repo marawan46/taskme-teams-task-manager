@@ -11,6 +11,7 @@ export type ApiResponse = {
 
 export type Task = Database["public"]["Tables"]["tasks"]["Row"];
 export type MyTask = Database["public"]["Tables"]["my_tasks"]["Row"];
+export type MyTaskGroup = Database["public"]["Tables"]["my_task_groups"]["Row"];
 export type Project = Database["public"]["Tables"]["projects"]["Row"];
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 export type Milestone = Database["public"]["Tables"]["milestones"]["Row"];

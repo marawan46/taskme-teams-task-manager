@@ -3,28 +3,26 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ModalWrapper } from "@/components/modal-wrapper";
-import { MyTaskForm } from "./my-task-form";
-import { PlusIcon, Pencil } from "lucide-react";
-import type { MyTask, MyTaskGroup } from "@/types/index.types";
+import { MyTaskGroupForm } from "./my-task-group-form";
+import { FolderPlus, Pencil } from "lucide-react";
+import type { MyTaskGroup } from "@/types/index.types";
 
-interface MyTaskDialogProps {
-     task?: MyTask | null;
-     groups?: MyTaskGroup[];
+interface MyTaskGroupDialogProps {
+     group?: MyTaskGroup | null;
      trigger?: "button" | "icon";
 }
 
-export function MyTaskDialog({
-     task = null,
-     groups = [],
+export function MyTaskGroupDialog({
+     group = null,
      trigger = "button",
-}: MyTaskDialogProps) {
+}: MyTaskGroupDialogProps) {
      const [open, setOpen] = useState(false);
-     const isEdit = Boolean(task);
+     const isEdit = Boolean(group);
 
-     const title = isEdit ? "Edit Task" : "Add New Task";
+     const title = isEdit ? "Edit Task Group" : "New Task Group";
      const description = isEdit
-          ? "Update your personal task details."
-          : "Create a personal task to keep track of your to-dos.";
+          ? "Rename or delete this task group."
+          : "Organize your personal tasks into groups.";
 
      return (
           <>
@@ -32,19 +30,19 @@ export function MyTaskDialog({
                     <Button
                          variant="ghost"
                          size="icon-sm"
-                         aria-label={isEdit ? "Edit task" : "Add task"}
+                         aria-label={isEdit ? "Edit task group" : "Add task group"}
                          onClick={() => setOpen(true)}
                     >
                          {isEdit ? (
                               <Pencil className="size-4" />
                          ) : (
-                              <PlusIcon className="size-4" />
+                              <FolderPlus className="size-4" />
                          )}
                     </Button>
                ) : (
                     <Button onClick={() => setOpen(true)}>
-                         <PlusIcon data-icon="inline-start" />
-                         Add Task
+                         <FolderPlus data-icon="inline-start" />
+                         New Group
                     </Button>
                )}
 
@@ -55,9 +53,8 @@ export function MyTaskDialog({
                     description={description}
                     className="sm:max-w-md"
                >
-                    <MyTaskForm
-                         task={task}
-                         groups={groups}
+                    <MyTaskGroupForm
+                         group={group}
                          onSuccess={() => setOpen(false)}
                     />
                </ModalWrapper>

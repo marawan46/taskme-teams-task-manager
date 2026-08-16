@@ -6,26 +6,46 @@ import {
      BreadcrumbPage,
      BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { ClipboardCheck, ListTodo, UserCheck } from "lucide-react";
-import { getAssignedTasks, getMyTasks } from "@/lib/actions/my-tasks";
+import { ClipboardCheck, FolderKanban, ListTodo, UserCheck } from "lucide-react";
+import {
+     getAssignedTasks,
+     getMyTaskGroups,
+     getMyTasks,
+} from "@/lib/actions/my-tasks";
 import { MyTaskDialog } from "@/components/my-tasks/my-task-dialog";
+import { MyTaskGroupDialog } from "@/components/my-tasks/my-task-group-dialog";
 import { MyTaskItem } from "@/components/my-tasks/my-task-item";
 import {
      AssignedTaskItem,
      type AssignedTask,
 } from "@/components/my-tasks/assigned-task-item";
-import type { MyTask } from "@/types/index.types";
+import type { MyTask, MyTaskGroup } from "@/types/index.types";
 
 export default async function MyTasksPage() {
-     const [myTasksResponse, assignedTasksResponse] = await Promise.all([
-          getMyTasks(),
-          getAssignedTasks(),
-     ]);
+     const [myTasksResponse, assignedTasksResponse, groupsResponse] =
+          await Promise.all([
+               getMyTasks(),
+               getAssignedTasks(),
+               getMyTaskGroups(),
+          ]);
 
      const myTasks =
           myTasksResponse.status === "success" && Array.isArray(myTasksResponse.data)
                ? (myTasksResponse.data as MyTask[])
                : [];
+
+     const groups =
+          groupsResponse.status === "success" && Array.isArray(groupsResponse.data)
+               ? (groupsResponse.data as MyTaskGroup[])
+               : [];
+
+     const tasksByGroup = groups.reduce<Record<string, MyTask[]>>(
+          (acc, group) => {
+               acc[group.id] = myTasks.filter((t) => t.group_id === group.id);
+               return acc;
+          },
+          {},
+     );
 
      const assignedTasks =
           assignedTasksResponse.status === "success" &&
@@ -64,7 +84,10 @@ export default async function MyTasksPage() {
                                    </p>
                               </div>
                          </div>
-                         <MyTaskDialog />
+                         <div className="flex items-center gap-2">
+                              <MyTaskGroupDialog />
+                              {groups.length > 0 && <MyTaskDialog groups={groups} />}
+                         </div>
                     </div>
                </div>
 
@@ -81,22 +104,69 @@ export default async function MyTasksPage() {
                          )}
                     </div>
 
-                    {myTasks.length === 0 ? (
+                    {groups.length === 0 ? (
                          <div className="rounded-xl border border-dashed border-border py-16 text-center">
-                              <p className="text-sm text-muted-foreground">
-                                   No personal tasks yet. Add one to keep track
-                                   of your to-dos.
+                              <FolderKanban className="mx-auto mb-4 size-8 text-muted-foreground" />
+                              <p className="text-sm font-semibold text-foreground">
+                                   No task groups yet
                               </p>
+                              <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
+                                   Create a task group first, then add tasks to
+                                   it to keep your to-dos organized.
+                              </p>
+                              <div className="mt-4 flex justify-center">
+                                   <MyTaskGroupDialog />
+                              </div>
                          </div>
                     ) : (
-                         <div className="overflow-hidden rounded-xl border border-border bg-card">
-                              {myTasks.map((task, i) => (
-                                   <MyTaskItem
-                                        key={task.id}
-                                        task={task}
-                                        isLast={i === myTasks.length - 1}
-                                   />
-                              ))}
+                         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                              {groups.map((group) => {
+                                   const groupTasks =
+                                        tasksByGroup[group.id] ?? [];
+                                   return (
+                                        <div
+                                             key={group.id}
+                                             className="overflow-hidden rounded-xl border border-border bg-card"
+                                        >
+                                             <div className="flex items-center justify-between border-b border-border bg-muted/30 px-6 py-3">
+                                                  <div className="flex min-w-0 items-center gap-2">
+                                                       <span className="truncate text-sm font-bold text-foreground">
+                                                            {group.name}
+                                                       </span>
+                                                       <span className="rounded bg-secondary px-2 py-0.5 text-[10px] font-bold text-secondary-foreground">
+                                                            {groupTasks.length}
+                                                       </span>
+                                                  </div>
+                                                  <MyTaskGroupDialog
+                                                       group={group}
+                                                       trigger="icon"
+                                                  />
+                                             </div>
+
+                                             {groupTasks.length === 0 ? (
+                                                  <div className="px-6 py-10 text-center">
+                                                       <p className="text-sm text-muted-foreground">
+                                                            No tasks in this group
+                                                            yet.
+                                                       </p>
+                                                  </div>
+                                             ) : (
+                                                  groupTasks.map((task, i) => (
+                                                       <MyTaskItem
+                                                            key={task.id}
+                                                            task={task}
+                                                            groups={groups}
+                                                            isLast={
+                                                                 i ===
+                                                                 groupTasks.length -
+                                                                      1
+                                                            }
+                                                       />
+                                                  ))
+                                             )}
+                                        </div>
+                                   );
+                              })}
                          </div>
                     )}
                </section>
