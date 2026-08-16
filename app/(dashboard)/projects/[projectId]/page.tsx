@@ -22,6 +22,7 @@ import { getInitials } from "@/lib/helpers";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { UsersIcon } from "lucide-react";
+import { InviteMemberDialog } from "@/components/projects/invite-member-dialog";
 
 export default async function ProjectDetailPage({
      params,
@@ -86,18 +87,7 @@ export default async function ProjectDetailPage({
                               )}
                          </div>
                          <div className="flex items-end gap-6">
-                              <Button
-                                   nativeButton={false}
-                                   variant="outline"
-                                   render={
-                                        <Link
-                                             href={`/projects/${projectId}/members`}
-                                        />
-                                   }
-                              >
-                                   <UsersIcon data-icon="inline-start" />
-                                   Members
-                              </Button>
+
                               <div className="text-right">
                                    <span className="inline-flex items-center px-3 py-1 bg-secondary text-secondary-foreground rounded-full text-[10px] font-bold uppercase tracking-wider mb-2">
                                         Overall Progress
@@ -185,7 +175,22 @@ export default async function ProjectDetailPage({
                          <h2 className="text-2xl font-heading font-bold text-foreground">
                               Milestones
                          </h2>
-                         <CreateMilestoneDialog projectId={projectId} />
+                         <div className="flex items-center gap-2">
+                              <CreateMilestoneDialog projectId={projectId} />
+                              <InviteMemberDialog projectId={projectId} />
+                                                            <Button
+                                   nativeButton={false}
+                                   variant="outline"
+                                   render={
+                                        <Link
+                                             href={`/projects/${projectId}/members`}
+                                        />
+                                   }
+                              >
+                                   <UsersIcon data-icon="inline-start" />
+                                   Members
+                              </Button>
+                         </div>
                     </div>
                     {milestones.length === 0 ? (
                          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border py-20">
