@@ -15,7 +15,7 @@ create type project_permission as enum (
 
   'invite:members',
   'remove:members',
-
+  'update:members',
   'read:milestones',
   'add:milestones',
   'update:milestones',
@@ -66,6 +66,7 @@ create table project_invitations (
   project_id  uuid not null references projects(id) on delete cascade,
   email       text not null,
   role        project_role not null default 'COLLABORATOR',
+  role_tag    text default 'member' check (char_length(role_tag) <= 20),
   invited_by  uuid not null references profiles(id),
   token_hash     text not null,
   status      invitation_status not null default 'PENDING',
@@ -290,7 +291,7 @@ begin
     select new.project_id, new.user_id, perm, new.user_id
     from unnest(array[
       'invite:members',
-      'read:milestones', 'add:milestones', 'update:milestones', 'delete:milestones',
+      'read:milestones', 'add:milestones','update:members', 'update:milestones', 'delete:milestones',
       'read:tasks', 'add:tasks', 'update:tasks', 'delete:tasks', 'approve:tasks'
     ]::project_permission[]) as perm
     on conflict do nothing;
@@ -383,8 +384,8 @@ begin
     return;
   end if;
 
-  insert into project_members (project_id, user_id, role)
-  values (v_invitation.project_id, auth.uid(), v_invitation.role);
+  insert into project_members (project_id, user_id, role, role_tag)
+  values (v_invitation.project_id, auth.uid(), v_invitation.role, v_invitation.role_tag);
 
   update project_invitations
     set status = 'ACCEPTED',

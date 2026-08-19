@@ -16,12 +16,8 @@ export type AcceptResult = ApiResponse & {
 
 const InviteMemberSchema = z.object({
 	projectId: z.uuid("Invalid project ID"),
-	email: z
-		.string()
-		.trim()
-		.toLowerCase()
-		.email("Invalid email address")
-		.max(320, "Email must be 320 characters or less"),
+	role_tag: z.string().trim().max(20, "Role tag must be 20 characters or less").nullable(),
+	email: z.email("Invalid email address").trim().toLowerCase(),
 	role: z.enum(["manager", "collaborator"]),
 });
 
@@ -60,7 +56,7 @@ export async function inviteMember(
 		};
 	}
 
-	const { projectId, email, role } = validation.data;
+	const { projectId, email, role, role_tag } = validation.data;
 
 	const cookieStore = await cookies();
 	const supabase = createClient(cookieStore);
@@ -89,6 +85,7 @@ export async function inviteMember(
 			project_id: projectId,
 			email,
 			role: dbRole,
+			role_tag: role_tag,
 			invited_by: user.id,
 			token_hash: tokenHash,
 		})
