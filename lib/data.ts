@@ -38,10 +38,17 @@ export async function fetchProjectTasks(
      supabase: SupabaseClient,
 ): Promise<{ data: ProjectTaskRow[] | null; error: string | null }> {
      const isLoading = true;
+     const {
+          data: { user },
+          error: getUserError,
+     } = await supabase.auth.getUser();
      const { data, error } = await supabase
           .from("tasks")
-          .select("*, projects(name), profiles:assigned_to(full_name, avatar_url)")
-          .order("created_at", { ascending: false });
+          .select(
+               "*, projects(name), profiles:assigned_to(full_name, avatar_url)",
+          )
+          .eq("assigned_to", user?.id)
+          .order("due_date", { ascending: true });
 
      if (error) {
           return { data: null, error: error.message };

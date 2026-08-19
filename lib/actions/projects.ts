@@ -39,6 +39,16 @@ const DeleteProjectSchema = z.object({
      id: z.uuid("Invalid project ID"),
 });
 
+const UpdateMemberInfoSchema = z.object({
+     projectId: z.uuid("Invalid project ID"),
+     userId: z.uuid("Invalid user ID"),
+     roleTag: z
+          .string()
+          .max(50, "Role tag must be 50 characters or less")
+          .optional()
+          .nullable(),
+});
+
 export async function getProjects(): Promise<ApiResponse> {
      const cookieStore = await cookies();
      const supabase = createClient(cookieStore);
@@ -60,15 +70,16 @@ export async function getProjects(): Promise<ApiResponse> {
 
      const { data, error } = await supabase
           .from("projects")
-          .select(
-               `
-               *,
-               project_members (
-                    user_id,
-                    role,
-                    profiles ( full_name, avatar_url )
-               )
-          `,
+           .select(
+                `
+                *,
+                project_members (
+                     user_id,
+                     role,
+                     role_tag,
+                     profiles ( full_name, avatar_url )
+                )
+           `,
           )
           .order("created_at", { ascending: false });
 
@@ -84,11 +95,12 @@ export async function getProjects(): Promise<ApiResponse> {
      }
 
      const projectsWithMembers = data.map((project) => {
-          const members = project.project_members.map((pm: any) => ({
-               full_name: pm.profiles?.full_name ?? null,
-               avatar_url: pm.profiles?.avatar_url ?? null,
-               role: pm.role,
-          }));
+           const members = project.project_members.map((pm: any) => ({
+                full_name: pm.profiles?.full_name ?? null,
+                avatar_url: pm.profiles?.avatar_url ?? null,
+                role: pm.role,
+                role_tag: pm.role_tag ?? null,
+           }));
           return {
                ...project,
                members,
@@ -145,10 +157,10 @@ export async function getProjectDetails(
                     )
                     .eq("project_id", projectId)
                     .order("due_date", { ascending: true }),
-               supabase
-                    .from("project_members")
-                    .select("user_id, role, profiles(full_name, avatar_url)")
-                    .eq("project_id", projectId),
+                supabase
+                     .from("project_members")
+                     .select("user_id, role, role_tag, profiles(full_name, avatar_url)")
+                     .eq("project_id", projectId),
           ]);
 
      if (projectResult.error || !projectResult.data) {
@@ -202,12 +214,13 @@ export async function getProjectDetails(
           };
      });
 
-     const memberData = members.map((m: any) => ({
-          user_id: m.user_id,
-          role: m.role,
-          full_name: m.profiles?.full_name ?? null,
-          avatar_url: m.profiles?.avatar_url ?? null,
-     }));
+      const memberData = members.map((m: any) => ({
+           user_id: m.user_id,
+           role: m.role,
+           role_tag: m.role_tag ?? null,
+           full_name: m.profiles?.full_name ?? null,
+           avatar_url: m.profiles?.avatar_url ?? null,
+      }));
 
      return {
           error: null,
@@ -407,9 +420,72 @@ export async function deleteProject(
           };
      }
 
+      return {
+           status: "success",
+           data: null,
+           error: null,
+      };
+}
+
+export async function updateMemberInfo(
+     input: z.infer<typeof UpdateMemberInfoSchema>,
+): Promise<ApiResponse> {
+     const validation = UpdateMemberInfoSchema.safeParse(input);
+
+     if (!validation.success) {
+          return {
+               data: null,
+               status: "error",
+               error: {
+                    code: 400,
+                    message: validation.error.issues[0].message,
+               },
+          };
+     }
+
+     const { projectId, userId, roleTag } = validation.data;
+
+     const cookieStore = await cookies();
+     const supabase = createClient(cookieStore);
+
+     const {
+          data: { user },
+     } = await supabase.auth.getUser();
+
+     if (!user) {
+          return {
+               data: null,
+               status: "error",
+               error: {
+                    code: 401,
+                    message: "Authentication required",
+               },
+          };
+     }
+
+     const { error } = await supabase.rpc("update_member_info", {
+          p_project_id: projectId,
+          p_user_id: userId,
+          p_role_tag: roleTag ?? null,
+     });
+
+     if (error) {
+          return {
+               data: null,
+               status: "error",
+               error: {
+                    code: 400,
+                    message:
+                         error.message === "insufficient_permissions"
+                              ? "You do not have permission to edit member info"
+                              : error.message,
+               },
+          };
+     }
+
      return {
+          error: null,
           status: "success",
           data: null,
-          error: null,
      };
 }

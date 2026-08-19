@@ -1,55 +1,91 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
+import { Plus, FolderOpen, ClipboardCheck } from "lucide-react";
+import { buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface DashboardGreetingProps {
-     userName?: string;
+  userName?: string;
 }
 
 function getGreeting(): string {
-     const hour = new Date().getHours();
-     if (hour < 12) return "Good morning";
-     if (hour < 18) return "Good afternoon";
-     return "Good evening";
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 18) return "Good afternoon";
+  return "Good evening";
 }
 
 function formatDate(date: Date): string {
-     return date.toLocaleDateString("en-US", {
-          weekday: "long",
-          month: "long",
-          day: "numeric",
-     });
+  return date.toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  });
 }
 
 function formatTime(date: Date): string {
-     return date.toLocaleTimeString("en-US", {
-          hour: "numeric",
-          minute: "2-digit",
-          hour12: true,
-     });
+  return date.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
 }
 
 export function DashboardGreeting({
-     userName = "Alex",
+  userName = "Alex",
 }: DashboardGreetingProps) {
-     const [time, setTime] = useState(new Date());
+  const [time, setTime] = useState(new Date());
 
-     useEffect(() => {
-          const interval = setInterval(() => {
-               setTime(new Date());
-          }, 1000);
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTime(new Date());
+    }, 1000);
 
-          return () => clearInterval(interval);
-     }, []);
+    return () => clearInterval(interval);
+  }, []);
 
-     return (
-          <section>
-               <h2 className="text-3xl font-extrabold tracking-tight text-foreground font-heading">
-                    {getGreeting()}, {userName}
-               </h2>
-               <p className="mt-1 text-sm font-medium text-muted-foreground">
-                    {formatDate(time)} — {formatTime(time)}
-               </p>
-          </section>
-     );
+  return (
+    <section className="flex items-start justify-between gap-4">
+      <div>
+        <h2 className="text-3xl font-extrabold tracking-tight text-foreground font-heading">
+          {getGreeting()}, {userName}
+        </h2>
+        <p className="mt-1 text-sm font-medium text-muted-foreground">
+          {formatDate(time)} &mdash; {formatTime(time)}
+        </p>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <Link
+          href="/my-tasks"
+          className={cn(
+            buttonVariants({ variant: "outline", size: "sm" }),
+            "gap-1.5"
+          )}
+        >
+          <ClipboardCheck className="size-4" />
+          My Tasks
+        </Link>
+        <Link
+          href="/projects"
+          className={cn(
+            buttonVariants({ variant: "outline", size: "sm" }),
+            "gap-1.5"
+          )}
+        >
+          <FolderOpen className="size-4" />
+          Projects
+        </Link>
+        <Link
+          href="/projects"
+          className={cn(buttonVariants({ size: "sm" }), "gap-1.5")}
+        >
+          <Plus className="size-4" />
+          New Project
+        </Link>
+      </div>
+    </section>
+  );
 }

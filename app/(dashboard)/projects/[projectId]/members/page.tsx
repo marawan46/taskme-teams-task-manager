@@ -7,6 +7,7 @@ import {
      BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { InviteMemberDialog } from "@/components/projects/invite-member-dialog";
+import { EditMemberDialog } from "@/components/projects/edit-member-dialog";
 import { InvitationsList } from "@/components/projects/invitations-list";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getUserPermissions } from "@/lib/auth/permissions";
@@ -21,6 +22,7 @@ type Invitation = Database["public"]["Tables"]["project_invitations"]["Row"];
 type MemberRow = {
      user_id: string;
      role: Database["public"]["Enums"]["project_role"];
+     role_tag: string | null;
      profiles: {
           full_name: string | null;
           avatar_url: string | null;
@@ -51,10 +53,10 @@ export default async function ProjectMembersPage({
                     .select("name")
                     .eq("id", projectId)
                     .single(),
-               supabase
-                    .from("project_members")
-                    .select("user_id, role, profiles(full_name, avatar_url)")
-                    .eq("project_id", projectId),
+                supabase
+                     .from("project_members")
+                     .select("user_id, role, role_tag, profiles(full_name, avatar_url)")
+                     .eq("project_id", projectId),
                supabase
                     .from("project_invitations")
                     .select("*")
@@ -133,47 +135,66 @@ export default async function ProjectMembersPage({
                               Current Members ({members.length})
                          </h2>
                          <ul className="divide-y divide-border rounded-xl border border-border bg-card">
-                              {members.map((member: MemberRow) => (
-                                   <li
-                                        key={member.user_id}
-                                        className="flex items-center gap-4 px-5 py-4"
-                                   >
-                                        <Avatar size="sm">
-                                             <AvatarImage
-                                                  src={
-                                                       member.profiles
-                                                            ?.avatar_url ??
-                                                       undefined
-                                                  }
-                                                  alt={
-                                                       member.profiles
-                                                            ?.full_name ?? ""
-                                                  }
-                                             />
-                                             <AvatarFallback>
-                                                  {getInitials(
-                                                       member.profiles
-                                                            ?.full_name ?? null,
-                                                  )}
-                                             </AvatarFallback>
-                                        </Avatar>
-                                        <div className="min-w-0 flex-1">
-                                             <p className="truncate text-sm font-medium text-foreground">
-                                                  {member.profiles?.full_name ??
-                                                       "Unnamed member"}
-                                             </p>
-                                        </div>
-                                        <span
-                                             className={
-                                                  "inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider " +
-                                                  (roleStyles[member.role] ??
-                                                       "")
-                                             }
-                                        >
-                                             {member.role}
-                                        </span>
-                                   </li>
-                              ))}
+                               {members.map((member: MemberRow) => (
+                                    <li
+                                         key={member.user_id}
+                                         className="flex items-center gap-4 px-5 py-4"
+                                    >
+                                         <Avatar size="sm">
+                                              <AvatarImage
+                                                   src={
+                                                        member.profiles
+                                                             ?.avatar_url ??
+                                                        undefined
+                                                   }
+                                                   alt={
+                                                        member.profiles
+                                                             ?.full_name ?? ""
+                                                   }
+                                              />
+                                              <AvatarFallback>
+                                                   {getInitials(
+                                                        member.profiles
+                                                             ?.full_name ?? null,
+                                                   )}
+                                              </AvatarFallback>
+                                         </Avatar>
+                                         <div className="min-w-0 flex-1">
+                                              <p className="truncate text-sm font-medium text-foreground">
+                                                   {member.profiles?.full_name ??
+                                                        "Unnamed member"}
+                                              </p>
+                                              {member.role_tag && (
+                                                   <p className="text-xs text-muted-foreground truncate">
+                                                        {member.role_tag}
+                                                   </p>
+                                              )}
+                                         </div>
+                                         <span
+                                              className={
+                                                   "inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider " +
+                                                   (roleStyles[member.role] ??
+                                                        "")
+                                              }
+                                         >
+                                              {member.role}
+                                         </span>
+                                         <EditMemberDialog
+                                              member={{
+                                                   user_id: member.user_id,
+                                                   role: member.role,
+                                                   role_tag: member.role_tag,
+                                                   full_name:
+                                                        member.profiles
+                                                             ?.full_name ?? null,
+                                                   avatar_url:
+                                                        member.profiles
+                                                             ?.avatar_url ?? null,
+                                              }}
+                                              projectId={projectId}
+                                         />
+                                    </li>
+                               ))}
                          </ul>
                     </section>
                    { (permissions.includes("invite:members") &&
