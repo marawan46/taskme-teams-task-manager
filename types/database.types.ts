@@ -469,6 +469,13 @@ export type Database = {
         Returns: boolean
       }
       sweep_expired_project_invitations: { Args: never; Returns: number }
+      transition_task_status: {
+        Args: {
+          p_new_status: Database["public"]["Enums"]["task_status"]
+          p_task_id: string
+        }
+        Returns: Database["public"]["Tables"]["tasks"]["Row"]
+      }
       verified_email_for_current_user: { Args: never; Returns: string }
       void_project_invitation: {
         Args: { p_invitation_id: string }

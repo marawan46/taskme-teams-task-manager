@@ -474,3 +474,106 @@ describe("tasks — status transitions", () => {
     expect(data.status).toBe("TODO");
   });
 });
+
+// ============================================================
+// transition_task_status — authorization
+// ============================================================
+
+describe("tasks — transition_task_status", () => {
+  async function transition(
+    user: AuthenticatedUser,
+    taskId: string,
+    newStatus: string,
+  ) {
+    return user.client.rpc("update_task_status", {
+      p_task_id: taskId,
+      p_status: newStatus,
+    });
+  }
+
+  test("assignee can start a task (TODO -> IN_PROGRESS)", async () => {
+    const project = await setupProject();
+    const { data: task } = await createTaskAs(owner, project.id, "Start");
+
+    const { data, error } = await transition(owner, task.id, "IN_PROGRESS");
+
+    expect(error).toBeNull();
+    expect(data.status).toBe("IN_PROGRESS");
+  });
+
+  test("non-assignee cannot start a task", async () => {
+    const project = await setupProject({ collaborator: true });
+    const { data: task } = await createTaskAs(owner, project.id, "Start");
+
+    const { error } = await transition(collaborator, task.id, "IN_PROGRESS");
+
+    expect(error).not.toBeNull();
+  });
+
+  test("assignee can submit for review (IN_PROGRESS -> UNDER_REVIEW)", async () => {
+    const project = await setupProject();
+    const { data: task } = await createTaskAs(owner, project.id, "Flow");
+
+    await transition(owner, task.id, "IN_PROGRESS");
+    const { data, error } = await transition(owner, task.id, "UNDER_REVIEW");
+
+    expect(error).toBeNull();
+    expect(data.status).toBe("UNDER_REVIEW");
+  });
+
+  test("non-assignee cannot submit for review", async () => {
+    const project = await setupProject({ collaborator: true });
+    const { data: task } = await createTaskAs(owner, project.id, "Flow");
+
+    await transition(owner, task.id, "IN_PROGRESS");
+    const { error } = await transition(collaborator, task.id, "UNDER_REVIEW");
+
+    expect(error).not.toBeNull();
+  });
+
+  test("approver (manager) can approve (UNDER_REVIEW -> DONE)", async () => {
+    const project = await setupProject({ manager: true });
+    const { data: task } = await createTaskAs(owner, project.id, "Approve");
+
+    await transition(owner, task.id, "IN_PROGRESS");
+    await transition(owner, task.id, "UNDER_REVIEW");
+    const { data, error } = await transition(manager, task.id, "DONE");
+
+    expect(error).toBeNull();
+    expect(data.status).toBe("DONE");
+  });
+
+  test("assignee without approve permission cannot approve", async () => {
+    const project = await setupProject({ collaborator: true });
+    const { data: task } = await createTaskAs(owner, project.id, "Approve", {
+      assigned_to: collaborator.id,
+    });
+
+    await transition(collaborator, task.id, "IN_PROGRESS");
+    await transition(collaborator, task.id, "UNDER_REVIEW");
+    const { error } = await transition(collaborator, task.id, "DONE");
+
+    expect(error).not.toBeNull();
+  });
+
+  test("approver can reject back to IN_PROGRESS", async () => {
+    const project = await setupProject({ manager: true });
+    const { data: task } = await createTaskAs(owner, project.id, "Reject");
+
+    await transition(owner, task.id, "IN_PROGRESS");
+    await transition(owner, task.id, "UNDER_REVIEW");
+    const { data, error } = await transition(manager, task.id, "IN_PROGRESS");
+
+    expect(error).toBeNull();
+    expect(data.status).toBe("IN_PROGRESS");
+  });
+
+  test("non-member cannot transition", async () => {
+    const project = await setupProject();
+    const { data: task } = await createTaskAs(owner, project.id, "Guarded");
+
+    const { error } = await transition(outsider, task.id, "IN_PROGRESS");
+
+    expect(error).not.toBeNull();
+  });
+});

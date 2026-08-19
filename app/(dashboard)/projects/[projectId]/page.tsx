@@ -23,6 +23,8 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { UsersIcon } from "lucide-react";
 import { InviteMemberDialog } from "@/components/projects/invite-member-dialog";
+import { createClient } from "@/utils/supabase/server";
+import { cookies } from "next/headers";
 
 export default async function ProjectDetailPage({
      params,
@@ -35,6 +37,13 @@ export default async function ProjectDetailPage({
      if (response.status === "error" || !response.data) {
           notFound();
      }
+
+     const cookieStore = await cookies();
+     const supabase = createClient(cookieStore);
+     const {
+          data: { user },
+     } = await supabase.auth.getUser();
+     const currentUserId = user?.id ?? null;
 
      const {
           project,
@@ -211,6 +220,7 @@ export default async function ProjectDetailPage({
                                    status={milestone.status}
                                    taskCount={milestone.taskCount}
                                    progress={milestone.progress}
+                                   currentUserId={currentUserId}
                               />
                          ))
                     )}

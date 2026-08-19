@@ -29,6 +29,7 @@ interface MilestoneCardProps {
      status?: MilestoneStatus;
      taskCount?: number;
      progress?: number;
+     currentUserId?: string | null;
 }
 
 function formatDateRange(start: string | null, end: string | null): string {
@@ -109,6 +110,7 @@ export function MilestoneCard({
      status = "upcoming",
      taskCount = 0,
      progress,
+     currentUserId,
 }: MilestoneCardProps) {
      const config = statusConfig[status];
      const dateRange = formatDateRange(
@@ -205,6 +207,9 @@ export function MilestoneCard({
                                                                  milestone.id
                                                             }
                                                             members={members}
+                                                            currentUserId={
+                                                                 currentUserId
+                                                            }
                                                        />
                                                   </li>
                                              ))}
