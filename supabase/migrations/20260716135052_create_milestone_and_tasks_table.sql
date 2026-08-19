@@ -65,7 +65,7 @@ begin
         raise exception 'IN_PROGRESS can only transition to UNDER_REVIEW, got %', new.status;
       end if;
     when 'UNDER_REVIEW' then
-      if new.status not in ('DONE', 'IN_PROGRESS') then
+      if new.status not in ('DONE', 'IN_PROGRESS') or not has_permission(new.project_id, 'approve:tasks') then
         raise exception 'UNDER_REVIEW can only transition to DONE or IN_PROGRESS, got %', new.status;
       end if;
     when 'DONE' then

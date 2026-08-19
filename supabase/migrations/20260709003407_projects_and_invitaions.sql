@@ -226,7 +226,7 @@ create policy project_invitations_select_relevant
 on project_invitations for select
 to authenticated
 using (
-  has_permission(project_id, 'invite:members')
+  has_permission(project_id, 'invite:members') or email = auth.email()
 );
 
 -- Creation is plain app-logic + RLS (a single insert with no multi-step
