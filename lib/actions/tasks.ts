@@ -56,7 +56,12 @@ const UpdateTaskSchema = z.object({
 
 const DeleteTaskSchema = z.object({
      id: z.uuid("Invalid task ID"),
-});
+ });
+
+const TransitionTaskSchema = z.object({
+     id: z.uuid("Invalid task ID"),
+     status: z.enum(["TODO", "IN_PROGRESS", "UNDER_REVIEW", "DONE"]),
+ });
 
 export async function createTask(
      input: z.infer<typeof CreateTaskSchema>,
@@ -217,6 +222,65 @@ export async function updateTask(
           error: null,
           status: "success",
           data,
+     };
+}
+
+export async function transitionTask(
+     input: z.infer<typeof TransitionTaskSchema>,
+): Promise<ApiResponse> {
+     const validation = TransitionTaskSchema.safeParse(input);
+
+     if (!validation.success) {
+          return {
+               status: "error",
+               data: null,
+               error: {
+                    code: 400,
+                    message: validation.error.issues[0].message,
+               },
+          };
+     }
+
+     const { id, status } = validation.data;
+
+     const cookieStore = await cookies();
+     const supabase = createClient(cookieStore);
+
+     const {
+          data: { user },
+     } = await supabase.auth.getUser();
+
+     if (!user) {
+          return {
+               status: "error",
+               data: null,
+               error: {
+                    code: 401,
+                    message: "Authentication required",
+               },
+          };
+     }
+
+     const { data, error } = await supabase.rpc("update_task_status", {
+          p_task_id: id,
+          p_new_status: status,
+     });
+
+     if (error) {
+          return {
+               data: null,
+               status: "error",
+               error: {
+                    code: 400,
+                    message: error.message,
+               },
+          };
+     }
+
+     return {
+          status: "success",
+          data,
+          error: null,
      };
 }
 

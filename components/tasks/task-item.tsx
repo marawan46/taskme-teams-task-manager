@@ -1,5 +1,8 @@
 "use client";
 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Can } from "@casl/react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
      Collapsible,
@@ -7,10 +10,11 @@ import {
      CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
-import { ChevronRight } from "lucide-react";
+import { Check, ChevronRight, Play, Send } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatTimeRemaining } from "@/lib/helpers";
 import type { Task, TaskStatus } from "@/types/index.types";
+import { transitionTask } from "@/lib/actions/tasks";
 import { TaskDialog } from "./task-dialog";
 import type { TaskMember } from "./task-form";
 import { getInitials } from "@/lib/helpers";
@@ -56,6 +60,7 @@ interface TaskItemProps {
      projectId: string;
      milestoneId: string;
      members: TaskMember[];
+     currentUserId?: string | null;
      depth?: number;
 }
 
@@ -65,11 +70,28 @@ export function TaskItem({
      projectId,
      milestoneId,
      members,
+     currentUserId,
      depth = 0,
 }: TaskItemProps) {
      const childrenTasks = childrenByParent.get(task.id) ?? [];
      const hasChildren = childrenTasks.length > 0;
      const assignee = task.assigned_profile;
+     const isAssignee = task.assigned_to === currentUserId;
+     const [isTransitioning, setIsTransitioning] = useState(false);
+     const router = useRouter();
+
+     const handleTransition = async (target: TaskStatus) => {
+          if (isTransitioning) return;
+          setIsTransitioning(true);
+          const res = await transitionTask({ id: task.id, status: target });
+          setIsTransitioning(false);
+
+          if (res.status === "success") {
+               router.refresh();
+          } else {
+               alert(res.error?.message ?? "Could not update the task");
+          }
+     };
 
      return (
           <Collapsible defaultOpen>
@@ -139,6 +161,43 @@ export function TaskItem({
                     </div>
 
                     <div className="flex shrink-0 items-center gap-1.5">
+                         {task.status === "TODO" && isAssignee && (
+                              <Button
+                                   size="xs"
+                                   variant="outline"
+                                   disabled={isTransitioning}
+                                   onClick={() => handleTransition("IN_PROGRESS")}
+                              >
+                                   <Play data-icon="inline-start" />
+                                   Mark as in progress
+                              </Button>
+                         )}
+                         {task.status === "IN_PROGRESS" && isAssignee && (
+                              <Button
+                                   size="xs"
+                                   variant="outline"
+                                   disabled={isTransitioning}
+                                   onClick={() =>
+                                        handleTransition("UNDER_REVIEW")
+                                   }
+                              >
+                                   <Send data-icon="inline-start" />
+                                   Submit for review
+                              </Button>
+                         )}
+                         <Can I="approve" a="Tasks">
+                              {task.status === "UNDER_REVIEW" && (
+                                   <Button
+                                        size="xs"
+                                        variant="outline"
+                                        disabled={isTransitioning}
+                                        onClick={() => handleTransition("DONE")}
+                                   >
+                                        <Check data-icon="inline-start" />
+                                        Approve
+                                   </Button>
+                              )}
+                         </Can>
                          <span
                               className={cn(
                                    "rounded px-1.5 py-0.5 text-[10px] font-bold uppercase",
