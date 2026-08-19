@@ -263,7 +263,7 @@ export async function transitionTask(
 
      const { data, error } = await supabase.rpc("update_task_status", {
           p_task_id: id,
-          p_new_status: status,
+          p_status: status,
      });
 
      if (error) {

@@ -3,6 +3,7 @@ import { Lock } from "lucide-react";
 import type { MyTask } from "@/types/index.types";
 import { PrivateTaskItem } from "./ui/private-task-item";
 import { PrivateTaskListSkeleton } from "./ui/private-task-list-skeleton";
+import { MyTaskItem } from "../my-tasks/my-task-item";
 
 interface PrivateTaskListProps {
   tasks?: MyTask[] | null;
@@ -46,11 +47,9 @@ export function PrivateTaskList({ tasks }: PrivateTaskListProps) {
       ) : (
         <div className="overflow-hidden rounded-xl border border-border bg-card">
           {tasks.map((task, i) => (
-            <PrivateTaskItem
+            <MyTaskItem
               key={task.id}
-              title={task.name}
-              dueDate={task.due_date}
-              priority={task.priority}
+              task={task}
               isLast={i === tasks.length - 1}
             />
           ))}
