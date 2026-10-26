@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
+import { useConfirm } from "@/components/ui/confirm";
 import {
      createMyTaskGroup,
      deleteMyTaskGroup,
@@ -26,6 +27,7 @@ export function MyTaskGroupForm({
 }: MyTaskGroupFormProps) {
      const router = useRouter();
      const calledRef = useRef(false);
+     const confirm = useConfirm();
      const isEdit = Boolean(group);
 
      const [state, formAction, isPending] = useActionState(
@@ -53,7 +55,16 @@ export function MyTaskGroupForm({
 
      const handleDelete = async () => {
           if (!group) return;
-          if (!confirm(`Delete "${group.name}" and all its tasks?`)) return;
+          if (
+               !(await confirm({
+                    title: "Delete group?",
+                    message: `Delete "${group.name}" and all its tasks? This cannot be undone.`,
+                    icon: "warning",
+                    confirmText: "Delete",
+                    variant: "destructive",
+               }))
+          )
+               return;
           const res = await deleteMyTaskGroup({ id: group.id });
           if (res.status === "success") {
                onSuccess?.();

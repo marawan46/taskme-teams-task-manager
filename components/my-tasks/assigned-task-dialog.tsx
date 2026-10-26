@@ -7,6 +7,7 @@ import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { ModalWrapper } from "@/components/modal-wrapper";
+import { useConfirm } from "@/components/ui/confirm";
 import { deleteTask, updateTask } from "@/lib/actions/tasks";
 import { Pencil, Trash2 } from "lucide-react";
 import type { ApiResponse, Task } from "@/types/index.types";
@@ -24,6 +25,7 @@ export function AssignedTaskDialog({ task }: AssignedTaskDialogProps) {
      const [open, setOpen] = useState(false);
      const router = useRouter();
      const calledRef = useRef(false);
+     const confirm = useConfirm();
 
      const [state, formAction, isPending] = useActionState(
           async (_prev: FormState, formData: FormData): Promise<FormState> => {
@@ -53,7 +55,16 @@ export function AssignedTaskDialog({ task }: AssignedTaskDialogProps) {
      }, [state, router]);
 
      const handleDelete = async () => {
-          if (!confirm(`Delete "${task.title}"?`)) return;
+          if (
+               !(await confirm({
+                    title: "Delete task?",
+                    message: `Delete "${task.title}"? This cannot be undone.`,
+                    icon: "warning",
+                    confirmText: "Delete",
+                    variant: "destructive",
+               }))
+          )
+               return;
           const res = await deleteTask({ id: task.id });
           if (res.status === "success") {
                setOpen(false);

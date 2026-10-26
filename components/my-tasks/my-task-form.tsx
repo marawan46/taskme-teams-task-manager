@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
+import { useConfirm } from "@/components/ui/confirm";
 import {
      createMyTask,
      deleteMyTask,
@@ -35,6 +36,7 @@ export function MyTaskForm({
 }: MyTaskFormProps) {
      const router = useRouter();
      const calledRef = useRef(false);
+     const confirm = useConfirm();
      const isEdit = Boolean(task);
 
      const [state, formAction, isPending] = useActionState(
@@ -69,7 +71,16 @@ export function MyTaskForm({
 
      const handleDelete = async () => {
           if (!task) return;
-          if (!confirm("Delete this task?")) return;
+          if (
+               !(await confirm({
+                    title: "Delete task?",
+                    message: "This task will be permanently deleted. This cannot be undone.",
+                    icon: "warning",
+                    confirmText: "Delete",
+                    variant: "destructive",
+               }))
+          )
+               return;
           const res = await deleteMyTask({ id: task.id });
           if (res.status === "success") {
                onSuccess?.();
