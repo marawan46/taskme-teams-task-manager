@@ -10,7 +10,8 @@ import { MilestoneCard } from "@/components/projects/milestone-card";
 import { CreateMilestoneDialog } from "@/components/milestones/create-milestone-dialog";
 import { getProjectDetails } from "@/lib/actions/projects";
 import { notFound } from "next/navigation";
-import { formatTimeRemaining } from "@/lib/helpers";
+import { formatDueDate } from "@/lib/helpers";
+import { TimeRemaining } from "@/components/projects/ui/time";
 import {
      Avatar,
      AvatarFallback,
@@ -54,8 +55,6 @@ export default async function ProjectDetailPage({
           memberCount,
      } = response.data;
 
-     const timeRemaining = formatTimeRemaining(project.due_date);
-
      const displayMembers = members.slice(0, 3);
      const overflowCount = Math.max(0, memberCount - 3);
 
@@ -96,7 +95,6 @@ export default async function ProjectDetailPage({
                               )}
                          </div>
                          <div className="flex items-end gap-6">
-
                               <div className="text-right">
                                    <span className="inline-flex items-center px-3 py-1 bg-secondary text-secondary-foreground rounded-full text-[10px] font-bold uppercase tracking-wider mb-2">
                                         Overall Progress
@@ -121,9 +119,7 @@ export default async function ProjectDetailPage({
                                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1">
                                         Time Remaining
                                    </span>
-                                   <span className="text-xl font-heading font-bold text-foreground">
-                                        {timeRemaining}
-                                   </span>
+                                   <TimeRemaining dueDate={project.due_date} />
                               </div>
                               <div className="flex flex-col">
                                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1">
@@ -187,7 +183,7 @@ export default async function ProjectDetailPage({
                          <div className="flex items-center gap-2">
                               <CreateMilestoneDialog projectId={projectId} />
                               <InviteMemberDialog projectId={projectId} />
-                                                            <Button
+                              <Button
                                    nativeButton={false}
                                    variant="outline"
                                    render={

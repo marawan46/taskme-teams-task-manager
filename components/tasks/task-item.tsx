@@ -12,12 +12,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Check, ChevronRight, Play, Send } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { formatTimeRemaining } from "@/lib/helpers";
+import { formatDueDate, formatTimeRemaining } from "@/lib/helpers";
 import type { Task, TaskStatus } from "@/types/index.types";
 import { transitionTask } from "@/lib/actions/tasks";
 import { TaskDialog } from "./task-dialog";
 import type { TaskMember } from "./task-form";
 import { getInitials } from "@/lib/helpers";
+import { TimeRemaining } from "../projects/ui/time";
 export type MilestoneTask = Task & {
      assigned_profile: {
           full_name: string | null;
@@ -52,7 +53,6 @@ const taskStatusLabels: Record<TaskStatus, string> = {
      UNDER_REVIEW: "Under Review",
      DONE: "Done",
 };
-
 
 interface TaskItemProps {
      task: MilestoneTask;
@@ -99,24 +99,24 @@ export function TaskItem({
                     className="relative flex items-center gap-2 px-3 py-2.5"
                     style={{ paddingLeft: `${8 + depth * 12}px` }}
                >
-                     {depth > 0 && (
-                          <>
-                               <span
-                                    aria-hidden
-                                    className="pointer-events-none absolute bottom-1/2 left-0 top-0 w-px bg-border"
-                               />
-                               <span
-                                    aria-hidden
-                                    className="pointer-events-none absolute left-0 top-1/2 h-px -translate-y-1/2 bg-border"
-                                    style={{
-                                         width: `${
-                                              (hasChildren ? 44 : 36) +
-                                              depth * 12
-                                         }px`,
-                                    }}
-                               />
-                          </>
-                     )}
+                    {depth > 0 && (
+                         <>
+                              <span
+                                   aria-hidden
+                                   className="pointer-events-none absolute bottom-1/2 left-0 top-0 w-px bg-border"
+                              />
+                              <span
+                                   aria-hidden
+                                   className="pointer-events-none absolute left-0 top-1/2 h-px -translate-y-1/2 bg-border"
+                                   style={{
+                                        width: `${
+                                             (hasChildren ? 44 : 36) +
+                                             depth * 12
+                                        }px`,
+                                   }}
+                              />
+                         </>
+                    )}
                     {hasChildren ? (
                          <CollapsibleTrigger
                               render={
@@ -141,7 +141,9 @@ export function TaskItem({
                                    alt={assignee?.full_name ?? ""}
                               />
                               <AvatarFallback>
-                                   {getInitials(assignee?.full_name ?? "Unassigned")}
+                                   {getInitials(
+                                        assignee?.full_name ?? "Unassigned",
+                                   )}
                               </AvatarFallback>
                          </Avatar>
                          <div className="min-w-0">
@@ -153,9 +155,7 @@ export function TaskItem({
                                         {assignee?.full_name ?? "Unassigned"}
                                    </span>
                                    <span>&bull;</span>
-                                   <span>
-                                        {formatTimeRemaining(task.due_date)}
-                                   </span>
+                                   <TimeRemaining className="text-xs" dueDate={task.due_date} />
                               </div>
                          </div>
                     </div>
@@ -166,7 +166,9 @@ export function TaskItem({
                                    size="xs"
                                    variant="outline"
                                    disabled={isTransitioning}
-                                   onClick={() => handleTransition("IN_PROGRESS")}
+                                   onClick={() =>
+                                        handleTransition("IN_PROGRESS")
+                                   }
                               >
                                    <Play data-icon="inline-start" />
                                    Mark as in progress

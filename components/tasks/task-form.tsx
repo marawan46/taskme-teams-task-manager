@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
+import { useConfirm } from "@/components/ui/confirm";
 import { createTask, deleteTask, updateTask } from "@/lib/actions/tasks";
 import type { ApiResponse, Task } from "@/types/index.types";
 import { Can } from "@casl/react";
@@ -39,19 +40,22 @@ export function TaskForm({
 }: TaskFormProps) {
      const router = useRouter();
      const calledRef = useRef(false);
+     const confirm = useConfirm();
 
      const [state, formAction, isPending] = useActionState(
           async (_prev: FormState, formData: FormData): Promise<FormState> => {
                const payload = {
                     title: formData.get("title") as string,
-                    description: (formData.get("description") as string) || null,
+                    description:
+                         (formData.get("description") as string) || null,
                     due_date: new Date(formData.get("due_date") as string),
                     priority: Number(formData.get("priority") ?? 0),
-                    status: (formData.get("status") as
-                         | "TODO"
-                         | "IN_PROGRESS"
-                         | "UNDER_REVIEW"
-                         | "DONE") || "TODO",
+                    status:
+                         (formData.get("status") as
+                              | "TODO"
+                              | "IN_PROGRESS"
+                              | "UNDER_REVIEW"
+                              | "DONE") || "TODO",
                     assigned_to: formData.get("assigned_to") as string,
                };
 
@@ -82,7 +86,16 @@ export function TaskForm({
 
      const handleDelete = async () => {
           if (!task) return;
-          if (!confirm("Delete this task?")) return;
+          if (
+               !(await confirm({
+                    title: "Delete task?",
+                    message: "This task will be permanently deleted. This cannot be undone.",
+                    icon: "warning",
+                    confirmText: "Delete",
+                    variant: "destructive",
+               }))
+          )
+               return;
           const res = await deleteTask({ id: task.id });
           if (res.status === "success") {
                onSuccess?.();
@@ -105,7 +118,9 @@ export function TaskForm({
                     </Field>
 
                     <Field>
-                         <FieldLabel htmlFor="description">Description</FieldLabel>
+                         <FieldLabel htmlFor="description">
+                              Description
+                         </FieldLabel>
                          <textarea
                               id="description"
                               name="description"
@@ -166,21 +181,6 @@ export function TaskForm({
                               <option value={1}>Medium</option>
                               <option value={2}>High</option>
                               <option value={3}>Urgent</option>
-                         </select>
-                    </Field>
-
-                    <Field>
-                         <FieldLabel htmlFor="status">Status</FieldLabel>
-                         <select
-                              id="status"
-                              name="status"
-                              defaultValue={task?.status ?? "TODO"}
-                              className={selectClassName}
-                         >
-                              <option value="TODO">To Do</option>
-                              <option value="IN_PROGRESS">In Progress</option>
-                              <option value="UNDER_REVIEW">Under Review</option>
-                              <option value="DONE">Done</option>
                          </select>
                     </Field>
 

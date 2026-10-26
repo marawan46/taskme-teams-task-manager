@@ -5,33 +5,17 @@ import Link from "next/link";
 import { Plus, FolderOpen, ClipboardCheck } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { getGreeting, formatDate,formatTime } from "@/lib/helpers";
 
 interface DashboardGreetingProps {
   userName?: string;
 }
 
-function getGreeting(): string {
-  const hour = new Date().getHours();
-  if (hour < 12) return "Good morning";
-  if (hour < 18) return "Good afternoon";
-  return "Good evening";
-}
 
-function formatDate(date: Date): string {
-  return date.toLocaleDateString("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-  });
-}
 
-function formatTime(date: Date): string {
-  return date.toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  });
-}
+
+
+
 
 export function DashboardGreeting({
   userName = "Alex",

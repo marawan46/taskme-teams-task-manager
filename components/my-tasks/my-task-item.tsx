@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { formatTimeRemaining } from "@/lib/helpers";
 import { deleteMyTask, updateMyTask } from "@/lib/actions/my-tasks";
 import { MyTaskDialog } from "./my-task-dialog";
+import { useConfirm } from "@/components/ui/confirm";
 import { Trash2 } from "lucide-react";
 import type { MyTask, MyTaskGroup } from "@/types/index.types";
 
@@ -35,10 +36,20 @@ export function MyTaskItem({
      isLast = false,
 }: MyTaskItemProps) {
      const router = useRouter();
+     const confirm = useConfirm();
      const dotColor = dotColorMap[task.priority] ?? "muted-foreground";
 
      const handleDelete = async () => {
-          if (!confirm(`Delete "${task.name}"?`)) return;
+          if (
+               !(await confirm({
+                    title: "Delete task?",
+                    message: `Delete "${task.name}"? This cannot be undone.`,
+                    icon: "warning",
+                    confirmText: "Delete",
+                    variant: "destructive",
+               }))
+          )
+               return;
           const res = await deleteMyTask({ id: task.id });
           if (res.status === "success") {
                router.refresh();

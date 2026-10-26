@@ -44,7 +44,7 @@ export function ProjectCard({
                     "transition-all hover:shadow-md hover:border-primary/20",
                )}
           >
-               <div className="absolute top-3 end-3 z-10">
+               <div className="absolute top-3 inset-e-3 z-10">
                     <ProjectCardMenu
                          project={project}
                          members={members}
@@ -57,11 +57,10 @@ export function ProjectCard({
                          <h3 className="text-lg font-bold text-foreground font-heading truncate group-hover:text-primary transition-colors">
                               {project.name}
                          </h3>
-                         {project.description && (
-                              <p className="mt-1 text-sm text-muted-foreground line-clamp-2">
-                                   {project.description}
-                              </p>
-                         )}
+
+                         <p className="mt-1 text-sm min-h-10 text-muted-foreground line-clamp-2">
+                              {project.description || "No description."}
+                         </p>
                     </div>
 
                     <div className="flex items-center justify-between mt-4">
