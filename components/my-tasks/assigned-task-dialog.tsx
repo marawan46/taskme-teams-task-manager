@@ -35,11 +35,6 @@ export function AssignedTaskDialog({ task }: AssignedTaskDialogProps) {
                     description:
                          (formData.get("description") as string) || null,
                     priority: Number(formData.get("priority") ?? 0),
-                    status: formData.get("status") as
-                         | "TODO"
-                         | "IN_PROGRESS"
-                         | "UNDER_REVIEW"
-                         | "DONE",
                     due_date: new Date(formData.get("due_date") as string),
                });
           },
@@ -160,22 +155,15 @@ export function AssignedTaskDialog({ task }: AssignedTaskDialogProps) {
                               </Field>
 
                               <Field>
-                                   <FieldLabel htmlFor="status">Status</FieldLabel>
-                                   <select
-                                        id="status"
-                                        name="status"
-                                        defaultValue={task.status ?? "TODO"}
-                                        className={selectClassName}
-                                   >
-                                        <option value="TODO">To Do</option>
-                                        <option value="IN_PROGRESS">
-                                             In Progress
-                                        </option>
-                                        <option value="UNDER_REVIEW">
-                                             Under Review
-                                        </option>
-                                        <option value="DONE">Done</option>
-                                   </select>
+                                   <FieldLabel>Status</FieldLabel>
+                                   <div className="flex items-center gap-2 pt-1">
+                                        <span className="inline-flex items-center rounded-md bg-muted px-2.5 py-1 text-xs font-semibold text-muted-foreground uppercase">
+                                             {task.status.replace("_", " ")}
+                                        </span>
+                                        <span className="text-xs text-muted-foreground">
+                                             (Status is changed using the action buttons)
+                                        </span>
+                                   </div>
                               </Field>
 
                               {state?.error && (

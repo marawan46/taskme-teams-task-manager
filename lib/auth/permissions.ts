@@ -10,61 +10,32 @@ export async function getUserPermissions(
 
      if (!user) return [];
 
-     // Check project membership & role
-    //  const { data: memberData, error: memberError } = await supabase
-    //       .from("project_members")
-    //       .select("role")
-    //       .eq("project_id", projectId)
-    //       .eq("user_id", user.id)
-    //       .single();
+     // Check if user is OWNER (matches SQL has_permission coalesce(get_project_role = 'OWNER', false))
+     const { data: memberData } = await supabase
+          .from("project_members")
+          .select("role")
+          .eq("project_id", projectId)
+          .eq("user_id", user.id)
+          .maybeSingle();
 
-    //  if (memberError || !memberData) {
-    //       // Check if user created the project
-    //       const { data: projectData } = await supabase
-    //            .from("projects")
-    //            .select("created_by")
-    //            .eq("id", projectId)
-    //            .single();
-
-    //       if (projectData?.created_by === user.id) {
-    //            // Owner has all permissions
-    //            return [
-    //                 "update:project",
-    //                 "delete:project",
-    //                 "invite:members",
-    //                 "remove:members",
-    //                 "read:milestones",
-    //                 "add:milestones",
-    //                 "update:milestones",
-    //                 "delete:milestones",
-    //                 "read:tasks",
-    //                 "add:tasks",
-    //                 "update:tasks",
-    //                 "delete:tasks",
-    //                 "approve:tasks",
-    //            ];
-    //       }
-
-    //       return [];
-    //  }
-
-    //  if (memberData.role === "OWNER") {
-    //       return [
-    //            "update:project",
-    //            "delete:project",
-    //            "invite:members",
-    //            "remove:members",
-    //            "read:milestones",
-    //            "add:milestones",
-    //            "update:milestones",
-    //            "delete:milestones",
-    //            "read:tasks",
-    //            "add:tasks",
-    //            "update:tasks",
-    //            "delete:tasks",
-    //            "approve:tasks",
-    //       ];
-    //  }
+     if (memberData?.role === "OWNER") {
+          return [
+               "update:project",
+               "delete:project",
+               "invite:members",
+               "remove:members",
+               "update:members",
+               "read:milestones",
+               "add:milestones",
+               "update:milestones",
+               "delete:milestones",
+               "read:tasks",
+               "add:tasks",
+               "update:tasks",
+               "delete:tasks",
+               "approve:tasks",
+          ];
+     }
 
      // Fetch explicit permissions for non-owner members
      const { data: permData, error: permError } = await supabase

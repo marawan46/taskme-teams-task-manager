@@ -10,7 +10,7 @@ import {
      CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
-import { Check, ChevronRight, Play, Send } from "lucide-react";
+import { Check, ChevronRight, Play, RotateCcw, Send } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatDueDate, formatTimeRemaining } from "@/lib/helpers";
 import type { Task, TaskStatus } from "@/types/index.types";
@@ -76,7 +76,7 @@ export function TaskItem({
      const childrenTasks = childrenByParent.get(task.id) ?? [];
      const hasChildren = childrenTasks.length > 0;
      const assignee = task.assigned_profile;
-     const isAssignee = task.assigned_to === currentUserId;
+     const isAssignee = Boolean(currentUserId && task.assigned_to === currentUserId);
      const [isTransitioning, setIsTransitioning] = useState(false);
      const router = useRouter();
 
@@ -96,8 +96,11 @@ export function TaskItem({
      return (
           <Collapsible defaultOpen>
                <div
-                    className="relative flex items-center gap-2 px-3 py-2.5"
-                    style={{ paddingLeft: `${8 + depth * 12}px` }}
+                    className={cn(
+                         "relative flex items-center gap-2 px-3 py-2.5 transition-colors hover:bg-muted/30",
+                         depth > 0 && "border-t border-border/50",
+                    )}
+                    style={{ paddingLeft: `${8 + depth * 14}px` }}
                >
                     {depth > 0 && (
                          <>
@@ -189,15 +192,29 @@ export function TaskItem({
                          )}
                          <Can I="approve" a="Tasks">
                               {task.status === "UNDER_REVIEW" && (
-                                   <Button
-                                        size="xs"
-                                        variant="outline"
-                                        disabled={isTransitioning}
-                                        onClick={() => handleTransition("DONE")}
-                                   >
-                                        <Check data-icon="inline-start" />
-                                        Approve
-                                   </Button>
+                                   <div className="flex items-center gap-1">
+                                        <Button
+                                             size="xs"
+                                             variant="outline"
+                                             disabled={isTransitioning}
+                                             onClick={() =>
+                                                  handleTransition("IN_PROGRESS")
+                                             }
+                                             title="Request changes and return to In Progress"
+                                        >
+                                             <RotateCcw data-icon="inline-start" />
+                                             Reject
+                                        </Button>
+                                        <Button
+                                             size="xs"
+                                             variant="outline"
+                                             disabled={isTransitioning}
+                                             onClick={() => handleTransition("DONE")}
+                                        >
+                                             <Check data-icon="inline-start" />
+                                             Approve
+                                        </Button>
+                                   </div>
                               )}
                          </Can>
                          <span
@@ -245,6 +262,7 @@ export function TaskItem({
                                              projectId={projectId}
                                              milestoneId={milestoneId}
                                              members={members}
+                                             currentUserId={currentUserId}
                                              depth={depth + 1}
                                         />
                                    </li>
