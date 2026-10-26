@@ -60,7 +60,7 @@ describe("my_task_groups — SELECT", () => {
 
     expect(error).toBeNull();
     expect(data).toHaveLength(1);
-    expect(data[0].name).toBe("Groceries");
+    expect(data![0].name).toBe("Groceries");
   });
 
   test("user cannot read other user's groups", async () => {

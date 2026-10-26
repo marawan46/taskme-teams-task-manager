@@ -1,8 +1,13 @@
 "use client";
 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Play, Send } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatTimeRemaining } from "@/lib/helpers";
 import { AssignedTaskDialog } from "./assigned-task-dialog";
+import { transitionTask } from "@/lib/actions/tasks";
 import type { Task, TaskStatus } from "@/types/index.types";
 
 export type AssignedTask = Task & {
@@ -50,6 +55,22 @@ export function AssignedTaskItem({
      task,
      isLast = false,
 }: AssignedTaskItemProps) {
+     const [isTransitioning, setIsTransitioning] = useState(false);
+     const router = useRouter();
+
+     const handleTransition = async (target: TaskStatus) => {
+          if (isTransitioning) return;
+          setIsTransitioning(true);
+          const res = await transitionTask({ id: task.id, status: target });
+          setIsTransitioning(false);
+
+          if (res.status === "success") {
+               router.refresh();
+          } else {
+               alert(res.error?.message ?? "Could not update the task");
+          }
+     };
+
      return (
           <div
                className={cn(
@@ -84,6 +105,28 @@ export function AssignedTaskItem({
                </div>
 
                <div className="flex shrink-0 items-center gap-1.5">
+                    {task.status === "TODO" && (
+                         <Button
+                              size="xs"
+                              variant="outline"
+                              disabled={isTransitioning}
+                              onClick={() => handleTransition("IN_PROGRESS")}
+                         >
+                              <Play data-icon="inline-start" />
+                              Mark as in progress
+                         </Button>
+                    )}
+                    {task.status === "IN_PROGRESS" && (
+                         <Button
+                              size="xs"
+                              variant="outline"
+                              disabled={isTransitioning}
+                              onClick={() => handleTransition("UNDER_REVIEW")}
+                         >
+                              <Send data-icon="inline-start" />
+                              Submit for review
+                         </Button>
+                    )}
                     <span
                          className={cn(
                               "rounded px-1.5 py-0.5 text-[10px] font-bold uppercase",
